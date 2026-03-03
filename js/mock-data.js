@@ -118,6 +118,12 @@ window.MockData = {
     { date: '2026-02-01', tenantName: 'Sunrise Education', subPlatform: 'Avatar', type: 'Subscription', description: 'Avatar Starter - Monthly', method: '-', amount: 1059.30, status: 'Overdue', ref: 'RF-2602-0008' },
   ],
 
+  // ─── Payment Verification Log (append-only) ───
+  verificationLog: [
+    { id: 'VL-001', invoiceId: 'INV-202602-00005', tenantId: 'T-002', tenantName: 'XYZ Trading',        amount: 1059.30, action: 'Approved', reason: null,                                         verifiedBy: 'finance@realfact.ai', verifiedDate: '2026-02-10', verifiedTime: '10:15' },
+    { id: 'VL-002', invoiceId: 'INV-202602-00007', tenantId: 'T-005', tenantName: 'Northern Star Hotel', amount: 5339.30, action: 'Rejected', reason: 'สลิปไม่ชัดเจน ไม่สามารถอ่านข้อมูลได้', verifiedBy: 'finance@realfact.ai', verifiedDate: '2026-02-18', verifiedTime: '14:30' },
+  ],
+
   // ─── Sub-Platforms ───
   subPlatforms: [
     { id: 'SP-001', name: 'Avatar (Live Interact)', code: 'avatar',  domain: 'avatar.realfact.ai',  status: 'Active',     tenants: 45, revenue: 234500, tokenUsage: 128750, plans: ['Free', 'Starter', 'Pro'],     exchangeRate: '1 Token = 1 Minute',  logo: null, primaryColor: '#f15b26', created: '2025-10-01', modifiedDate: '2026-02-01', modifiedBy: 'super@realfact.ai' },

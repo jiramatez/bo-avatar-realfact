@@ -263,6 +263,7 @@ window.Pages.billingVerify = {
   render() {
     const d       = window.MockData;
     const pending = d.invoices.filter(i => i.status === 'Pending Verification');
+    const vlog    = d.verificationLog || [];
 
     return `
       <div class="page-header">
@@ -281,49 +282,78 @@ window.Pages.billingVerify = {
             <i class="fa-solid fa-circle-check"></i>
             <p>ไม่มีรายการรอตรวจสอบ</p>
            </div>`
-        : `<div class="grid-2 gap-16">
-            ${pending.map(inv => `
-              <div class="card-accent p-20">
-                <div class="flex justify-between items-center mb-12">
-                  <div class="mono font-600 text-sm">${inv.id}</div>
-                  ${d.statusChip(inv.status)}
-                </div>
-                <div class="flex-col gap-8 mb-16">
-                  <div class="flex justify-between">
-                    <span class="text-sm text-muted uppercase">Tenant</span>
-                    <span class="font-600">${inv.tenantName}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-sm text-muted uppercase">จำนวนเงิน</span>
-                    <span class="mono font-700" style="font-size:18px;color:var(--primary);">${d.formatCurrency(inv.total)}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-sm text-muted uppercase">ช่องทาง</span>
-                    <span class="text-sm">${inv.method || 'Bank Transfer'}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-sm text-muted uppercase">วันครบกำหนด</span>
-                    <span class="text-sm mono">${inv.dueDate}</span>
-                  </div>
-                </div>
-                <div class="card p-16 mb-16" style="border-style:dashed;">
-                  <div class="flex-col items-center gap-8">
-                    <i class="fa-solid fa-receipt text-muted" style="font-size:24px;"></i>
-                    <div class="text-sm text-muted">สลิปการโอนเงิน</div>
-                    <div class="text-xs text-muted">อัปโหลดโดย Tenant</div>
-                    <span class="chip chip-yellow">รอตรวจสอบ</span>
-                  </div>
-                </div>
-                <div class="flex gap-10 justify-end">
-                  <button class="btn btn-danger btn-sm verify-reject-btn" data-id="${inv.id}">
-                    <i class="fa-solid fa-xmark"></i> ปฏิเสธ
-                  </button>
-                  <button class="btn btn-success btn-sm verify-approve-btn" data-id="${inv.id}">
-                    <i class="fa-solid fa-check"></i> อนุมัติ
-                  </button>
-                </div>
-              </div>`).join('')}
+        : `<div class="table-wrap mb-8">
+            <table>
+              <thead>
+                <tr>
+                  <th>INV ID</th><th>TENANT</th><th>รายละเอียด</th>
+                  <th>จำนวนเงิน</th><th>ช่องทาง</th><th>ครบกำหนด</th>
+                  <th>สลิป</th><th>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${pending.map(inv => `
+                  <tr>
+                    <td class="mono text-sm">${inv.id}</td>
+                    <td class="font-600">${inv.tenantName}</td>
+                    <td class="text-sm text-muted">${inv.description}</td>
+                    <td class="mono font-700" style="color:var(--primary);">${d.formatCurrency(inv.total)}</td>
+                    <td class="text-sm">${inv.method || 'Bank Transfer'}</td>
+                    <td class="mono text-sm text-muted">${inv.dueDate}</td>
+                    <td>
+                      <span class="chip chip-yellow" style="cursor:pointer;" title="ดูสลิป">
+                        <i class="fa-solid fa-receipt"></i> ดูสลิป
+                      </span>
+                    </td>
+                    <td>
+                      <div class="flex gap-6">
+                        <button class="btn btn-danger btn-sm verify-reject-btn" data-id="${inv.id}" title="ปฏิเสธ">
+                          <i class="fa-solid fa-xmark"></i> ปฏิเสธ
+                        </button>
+                        <button class="btn btn-success btn-sm verify-approve-btn" data-id="${inv.id}" title="อนุมัติ">
+                          <i class="fa-solid fa-check"></i> อนุมัติ
+                        </button>
+                      </div>
+                    </td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
           </div>`}
+
+      <!-- Verification Log -->
+      <div class="mt-28">
+        <div class="text-sm uppercase text-muted font-600 mb-12">
+          <i class="fa-solid fa-clock-rotate-left"></i>&nbsp; ประวัติการตรวจสอบ
+        </div>
+        ${vlog.length === 0
+          ? '<div class="text-sm text-muted p-8">ยังไม่มีประวัติการตรวจสอบ</div>'
+          : `<div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>INV ID</th><th>TENANT</th><th>จำนวนเงิน</th>
+                    <th>ผล</th><th>เหตุผล</th><th>ตรวจสอบโดย</th><th>วันที่ · เวลา</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${vlog.map(vl => `
+                    <tr>
+                      <td class="mono text-sm">${vl.invoiceId}</td>
+                      <td class="font-600">${vl.tenantName}</td>
+                      <td class="mono">${d.formatCurrency(vl.amount)}</td>
+                      <td>${vl.action === 'Approved'
+                        ? '<span class="chip chip-green"><i class="fa-solid fa-check"></i> อนุมัติ</span>'
+                        : '<span class="chip chip-red"><i class="fa-solid fa-xmark"></i> ปฏิเสธ</span>'}</td>
+                      <td class="text-sm text-muted">${vl.reason || '—'}</td>
+                      <td style="white-space:nowrap;">
+                        <div class="text-sm font-600">${vl.verifiedBy.split('@')[0]}</div>
+                      </td>
+                      <td class="mono text-sm text-muted" style="white-space:nowrap;">${vl.verifiedDate}${vl.verifiedTime ? ' · ' + vl.verifiedTime : ''}</td>
+                    </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>`}
+      </div>
     `;
   },
 
@@ -334,7 +364,21 @@ window.Pages.billingVerify = {
     document.querySelectorAll('.verify-approve-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const inv = d.invoices.find(i => i.id === btn.dataset.id);
-        if (inv) { inv.status = 'Paid'; inv.paidDate = new Date().toISOString().slice(0,10); }
+        if (!inv) return;
+        const now  = new Date();
+        const date = now.toISOString().slice(0, 10);
+        const time = now.toTimeString().slice(0, 5);
+        inv.status       = 'Paid';
+        inv.paidDate     = date;
+        inv.verifiedBy   = 'finance@realfact.ai';
+        inv.verifiedDate = date;
+        d.verificationLog = d.verificationLog || [];
+        d.verificationLog.unshift({
+          id: 'VL-' + Date.now(),
+          invoiceId: inv.id, tenantId: inv.tenantId, tenantName: inv.tenantName,
+          amount: inv.total, action: 'Approved', reason: null,
+          verifiedBy: 'finance@realfact.ai', verifiedDate: date, verifiedTime: time,
+        });
         App.toast('อนุมัติการชำระเงินสำเร็จ', 'success');
         self._rerender();
       });
@@ -362,7 +406,20 @@ window.Pages.billingVerify = {
           document.getElementById('reject-confirm-btn')?.addEventListener('click', () => {
             const reason = document.getElementById('reject-reason').value.trim();
             if (!reason) { App.toast('กรุณาระบุเหตุผล','error'); return; }
-            inv.status = 'Issued'; inv.rejectReason = reason;
+            const now  = new Date();
+            const date = now.toISOString().slice(0, 10);
+            const time = now.toTimeString().slice(0, 5);
+            inv.status       = 'Issued';
+            inv.rejectReason = reason;
+            inv.rejectedBy   = 'finance@realfact.ai';
+            inv.rejectedDate = date;
+            d.verificationLog = d.verificationLog || [];
+            d.verificationLog.unshift({
+              id: 'VL-' + Date.now(),
+              invoiceId: inv.id, tenantId: inv.tenantId, tenantName: inv.tenantName,
+              amount: inv.total, action: 'Rejected', reason,
+              verifiedBy: 'finance@realfact.ai', verifiedDate: date, verifiedTime: time,
+            });
             App.closeModal();
             App.toast('ปฏิเสธการชำระเงินแล้ว','error');
             self._rerender();
