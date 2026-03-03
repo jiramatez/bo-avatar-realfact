@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RealFact Avatar Backoffice</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6.5.1 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- ═══ SIDEBAR ═══ -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">RF</div>
+        <span class="brand-text">REALFACT</span>
+      </div>
+
+      <div class="nav-items">
+        <!-- ══ PLATFORM — Central Backoffice ══ -->
+        <div class="nav-group" data-context="backoffice">
+          <div class="nav-section">
+            <i class="fa-solid fa-building nav-section-icon"></i>
+            <span class="nav-section-label">PLATFORM</span>
+          </div>
+          <a href="#dashboard" class="nav-item active" data-page="dashboard">
+            <i class="fa-solid fa-chart-line"></i>
+            <span class="nav-label">Dashboard</span>
+          </a>
+          <a href="#sub-platforms" class="nav-item" data-page="sub-platforms">
+            <i class="fa-solid fa-layer-group"></i>
+            <span class="nav-label">Sub-Platforms</span>
+          </a>
+          <a href="#tenants" class="nav-item" data-page="tenants">
+            <i class="fa-solid fa-users"></i>
+            <span class="nav-label">Tenants</span>
+          </a>
+          <a href="#cost-pricing" class="nav-item" data-page="cost-pricing">
+            <i class="fa-solid fa-calculator"></i>
+            <span class="nav-label">Cost & Pricing</span>
+          </a>
+          <a href="#plans-packages" class="nav-item" data-page="plans-packages">
+            <i class="fa-solid fa-tags"></i>
+            <span class="nav-label">Plans & Packages</span>
+          </a>
+          <a href="#payment-settings" class="nav-item" data-page="payment-settings">
+            <i class="fa-solid fa-building-columns"></i>
+            <span class="nav-label">Payment Settings</span>
+          </a>
+          <a href="#billing" class="nav-item" data-page="billing">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            <span class="nav-label">Billing</span>
+          </a>
+        </div>
+
+        <!-- ══ AVATAR — Sub-Platform Modules ══ -->
+        <div class="nav-group" data-context="avatar">
+          <div class="nav-section">
+            <i class="fa-solid fa-robot nav-section-icon"></i>
+            <span class="nav-section-label">AVATAR</span>
+          </div>
+          <a href="#avatar-dashboard" class="nav-item" data-page="avatar-dashboard">
+            <i class="fa-solid fa-chart-line"></i>
+            <span class="nav-label">Dashboard</span>
+          </a>
+          <a href="#avatar-tenants" class="nav-item" data-page="avatar-tenants">
+            <i class="fa-solid fa-building-user"></i>
+            <span class="nav-label">Tenants</span>
+          </a>
+          <a href="#hardware" class="nav-item" data-page="hardware">
+            <i class="fa-solid fa-warehouse"></i>
+            <span class="nav-label">Hardware</span>
+          </a>
+          <a href="#devices" class="nav-item" data-page="devices">
+            <i class="fa-solid fa-display"></i>
+            <span class="nav-label">Devices</span>
+          </a>
+          <a href="#service-builder" class="nav-item" data-page="service-builder">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span class="nav-label">Service Builder</span>
+          </a>
+          <a href="#knowledge-base" class="nav-item" data-page="knowledge-base">
+            <i class="fa-solid fa-book"></i>
+            <span class="nav-label">Knowledge Base</span>
+          </a>
+          <a href="#avatar-settings" class="nav-item" data-page="avatar-settings">
+            <i class="fa-solid fa-sliders"></i>
+            <span class="nav-label">Avatar Defaults</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="nav-item" id="sidebar-lock">
+          <i class="fa-solid fa-thumbtack"></i>
+          <span class="nav-label">Lock Sidebar</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ═══ MAIN AREA ═══ -->
+    <div class="main-area">
+      <!-- Topbar -->
+      <header class="topbar" id="topbar">
+        <div class="topbar-left">
+          <!-- Context Switcher -->
+          <div class="ctx-switcher" id="ctx-switcher">
+            <button class="ctx-switcher-btn" id="ctx-switcher-btn">
+              <div class="ctx-switcher-icon" id="ctx-icon">
+                <i class="fa-solid fa-building"></i>
+              </div>
+              <div class="ctx-switcher-text">
+                <span class="ctx-switcher-label" id="ctx-label">Central Backoffice</span>
+                <span class="ctx-switcher-sub" id="ctx-sub">Platform Management</span>
+              </div>
+              <i class="fa-solid fa-chevron-down ctx-switcher-arrow" id="ctx-arrow"></i>
+            </button>
+            <div class="ctx-dropdown" id="ctx-dropdown">
+              <div class="ctx-dropdown-item" data-ctx="backoffice">
+                <div class="ctx-dropdown-icon"><i class="fa-solid fa-building"></i></div>
+                <div class="ctx-dropdown-info">
+                  <span class="ctx-dropdown-name">Central Backoffice</span>
+                  <span class="ctx-dropdown-desc">Sub-Platforms, Tenants, Cost & Billing</span>
+                </div>
+                <i class="fa-solid fa-check ctx-dropdown-check"></i>
+              </div>
+              <div class="ctx-dropdown-item" data-ctx="avatar">
+                <div class="ctx-dropdown-icon avatar-icon"><i class="fa-solid fa-robot"></i></div>
+                <div class="ctx-dropdown-info">
+                  <span class="ctx-dropdown-name">RealFact Avatar</span>
+                  <span class="ctx-dropdown-desc">Hardware · Devices · Service Builder · KB · Defaults</span>
+                </div>
+                <i class="fa-solid fa-check ctx-dropdown-check"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="topbar-divider"></div>
+          <span class="topbar-page text-muted" id="page-title">Dashboard</span>
+        </div>
+        <div class="topbar-right">
+          <div class="balance-chip" title="Total Token Balance">
+            <i class="fa-solid fa-coins"></i>
+            <span class="mono balance-amount">154,200</span>
+            <span class="balance-unit">TOKENS</span>
+          </div>
+          <button class="topbar-btn" id="theme-toggle" title="Toggle Theme">
+            <span id="theme-icon">&#127769;</span>
+          </button>
+          <button class="topbar-btn" id="notification-btn" title="Notifications">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notification-dot"></span>
+          </button>
+          <div class="user-avatar" title="Admin">SC</div>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <main class="content" id="content">
+        <!-- Pages render here via JS -->
+      </main>
+    </div>
+  </div>
+
+  <!-- ═══ SCRIPTS ═══ -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/pages/dashboard.js"></script>
+  <script src="js/pages/avatar-dashboard.js"></script>
+  <script src="js/pages/avatar-tenants.js"></script>
+  <script src="js/pages/hardware.js"></script>
+  <script src="js/pages/devices.js"></script>
+  <script src="js/pages/service-builder.js"></script>
+  <script src="js/pages/knowledge-base.js"></script>
+  <script src="js/pages/tenants.js"></script>
+  <script src="js/pages/billing.js"></script>
+  <script src="js/pages/sub-platforms.js"></script>
+  <script src="js/pages/avatar-settings.js"></script>
+  <script src="js/pages/cost-pricing.js"></script>
+  <script src="js/pages/plans-packages.js"></script>
+  <script src="js/pages/payment-settings.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
