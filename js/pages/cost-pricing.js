@@ -583,6 +583,7 @@ window.Pages.costMargin = {
         effectiveMargin:  effectiveMargin,
         overrideLabel:    overrideLabel,
         isOverride:       !!override,
+        effectiveDate:    override ? (override.effectiveDate || '—') : '—',
         lastUpdate:       override ? (override.modifiedDate || override.lastUpdate || '—') : '—',
         updatedBy:        override ? (override.modifiedBy  || override.updatedBy  || '—') : '—',
       };
@@ -661,6 +662,7 @@ window.Pages.costMargin = {
           <div class="flex-col gap-4">
             <div class="text-sm text-muted">ตัวอย่าง: ต้นทุน 1.00 THB</div>
             <div class="text-sm">ราคาขาย = <span class="mono font-600 text-success">${(1 / (1 - mc.global / 100)).toFixed(2)} THB</span></div>
+            ${mc.effectiveDate ? `<div class="text-xs text-muted"><i class="fa-solid fa-calendar-check"></i> Effective: <span class="mono">${mc.effectiveDate}</span></div>` : ''}
           </div>
         </div>
       </div>
@@ -674,6 +676,7 @@ window.Pages.costMargin = {
               <th>Provider</th>
               <th>Margin %</th>
               <th>ส่วนต่างจาก Global</th>
+              <th>Effective Date</th>
               <th>แก้ไขล่าสุด</th>
               <th>จัดการ</th>
             </tr>
@@ -690,6 +693,7 @@ window.Pages.costMargin = {
                       ? `<span class="text-error">${p.margin - mc.global}%</span>`
                       : '<span class="text-muted">เท่ากับ Global</span>'}
                 </td>
+                <td class="mono text-sm">${p.effectiveDate || '-'}</td>
                 <td style="white-space:nowrap;"><div class="mono text-sm text-muted">${p.modifiedDate || '-'}</div>${p.modifiedBy ? `<div class="text-xs text-dim">${p.modifiedBy.split('@')[0]}</div>` : ''}</td>
                 <td>
                   <button class="btn btn-sm btn-outline provider-margin-edit-btn" data-idx="${idx}">
@@ -721,6 +725,7 @@ window.Pages.costMargin = {
               <th>MARGIN % <i class="fa-solid fa-pen" style="font-size:9px;opacity:.4;"></i></th>
               <th>SELL PRICE (THB) <i class="fa-solid fa-pen" style="font-size:9px;opacity:.4;"></i></th>
               <th>OVERRIDE?</th>
+              <th>Effective Date</th>
               <th>STATUS</th>
               <th>แก้ไขล่าสุด</th>
             </tr>
@@ -861,6 +866,7 @@ window.Pages.costMargin = {
                 </td>
 
                 <td>${overrideBadge(row)}</td>
+                <td class="mono text-sm">${row.effectiveDate !== '—' ? row.effectiveDate : '<span class="text-dim">—</span>'}</td>
                 <td>${d.statusChip(row.status)}</td>
                 <td style="white-space:nowrap;">
                   ${row.lastUpdate !== '—'
@@ -910,6 +916,106 @@ window.Pages.costMargin = {
           </div>
         </div>
       </div>
+
+      <!-- Platform Token Sell Price -->
+      <div class="divider mb-20 mt-28"></div>
+      <div class="section-title mb-12"><i class="fa-solid fa-coins"></i> ราคาขายต่อ 1 Token แต่ละ Platform</div>
+      <div class="banner-info mb-16">
+        <div class="banner-icon"><i class="fa-solid fa-circle-info"></i></div>
+        <div class="text-sm">ราคาขาย = Cost ÷ (1 − Effective Margin% ÷ 100) · Token Rate อ้างอิงจาก Sub-Platform Config</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Service Code</th>
+              <th>Token Rate</th>
+              <th>Billing Type</th>
+              <th>Cost / Unit</th>
+              <th>Effective Margin</th>
+              <th>Sell Price / Unit</th>
+              <th>= ราคาขาย / 1 Token</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${d.subPlatforms.map(sp => {
+              // Map platform to relevant services
+              const svcMap = { avatar: ['avatar-session'], booking: ['elevenlabs-turbo-v2-5'] };
+              const svcCodes = svcMap[sp.code] || [];
+              if (!svcCodes.length) {
+                return `<tr>
+                  <td><span class="font-600">${sp.name}</span><br><span class="text-xs text-muted mono">${sp.code}</span></td>
+                  <td colspan="7" class="text-muted text-sm">ยังไม่ได้กำหนด Service Code</td>
+                </tr>`;
+              }
+              return svcCodes.map((sc, i) => {
+                const svc = d.costConfig.find(c => c.serviceCode === sc);
+                if (!svc) return '';
+                const row = rows.find(r => r.serviceCode === sc);
+                const margin = row ? row.effectiveMargin : mc.global;
+                const sell = self._sell(svc.costPerUnit, margin);
+                const badge = row ? (row.overrideLabel === 'override'
+                  ? '<span class="chip chip-purple" style="font-size:10px;">Override</span>'
+                  : row.overrideLabel === 'provider'
+                  ? '<span class="chip chip-blue" style="font-size:10px;">Provider</span>'
+                  : '<span class="chip chip-gray" style="font-size:10px;">Global</span>') : '';
+                return `<tr>
+                  ${i === 0 ? `<td rowspan="${svcCodes.length}" style="vertical-align:middle;border-left:3px solid ${sp.primaryColor || 'var(--primary)'};">
+                    <span class="font-600">${sp.name}</span><br><span class="text-xs text-muted mono">${sp.code}</span>
+                  </td>` : ''}
+                  <td class="mono text-sm">${svc.serviceCode}</td>
+                  <td class="text-sm">${sp.exchangeRate}</td>
+                  <td>${window.Pages.costPricing._billingChip(svc.billingType)}</td>
+                  <td class="mono">${fmtCost(svc.costPerUnit)} <span class="text-xs text-muted">THB</span></td>
+                  <td class="mono">${margin.toFixed(1)}% ${badge}</td>
+                  <td class="mono text-success">${fmtCost(sell)} <span class="text-xs text-muted">THB</span></td>
+                  <td style="text-align:center;">
+                    <div class="mono font-700" style="font-size:18px;color:var(--primary);">${fmtCost(sell)} THB</div>
+                    <div class="text-xs text-muted">per 1 Token</div>
+                  </td>
+                </tr>`;
+              }).join('');
+            }).join('')}
+            <!-- Developer Portal: API-based (Per Token services) -->
+            ${(() => {
+              const dpServices = d.costConfig.filter(c => c.billingType === 'Per Token');
+              return `<tr>
+                <td rowspan="${dpServices.length + 1}" style="vertical-align:middle;border-left:3px solid #8b5cf6;">
+                  <span class="font-600">Developer Portal</span><br><span class="text-xs text-muted mono">devportal</span>
+                </td>
+                <td colspan="7" class="text-xs text-muted" style="padding:6px 12px;background:rgba(139,92,246,.05);">
+                  API Token — ราคาต่อ 1 Token ขึ้นกับ Service Code ที่เรียกใช้ (Input / Output แยกกัน)
+                </td>
+              </tr>` +
+              dpServices.map(svc => {
+                const row = rows.find(r => r.serviceCode === svc.serviceCode);
+                const margin = row ? row.effectiveMargin : mc.global;
+                const sellIn = self._sell(svc.costPerUnit, margin);
+                const sellOut = svc.outputCostPerUnit ? self._sell(svc.outputCostPerUnit, margin) : null;
+                const badge = row ? (row.overrideLabel === 'override'
+                  ? '<span class="chip chip-purple" style="font-size:10px;">Override</span>'
+                  : row.overrideLabel === 'provider'
+                  ? '<span class="chip chip-blue" style="font-size:10px;">Provider</span>'
+                  : '<span class="chip chip-gray" style="font-size:10px;">Global</span>') : '';
+                return `<tr>
+                  <td class="mono text-sm">${svc.serviceCode}</td>
+                  <td class="text-sm">1 Token = 1 API Token</td>
+                  <td>${window.Pages.costPricing._billingChip(svc.billingType)}</td>
+                  <td class="mono">${fmtCost(svc.costPerUnit)}${sellOut != null ? '<br><span class="text-xs text-muted">out: ' + fmtCost(svc.outputCostPerUnit) + '</span>' : ''}</td>
+                  <td class="mono">${margin.toFixed(1)}% ${badge}</td>
+                  <td class="mono text-success">${fmtCost(sellIn)}${sellOut != null ? '<br><span class="text-xs text-muted">out: ' + fmtCost(sellOut) + '</span>' : ''}</td>
+                  <td style="text-align:center;">
+                    <div class="mono font-700" style="color:var(--primary);">${fmtCost(sellIn)}</div>
+                    ${sellOut != null ? '<div class="mono text-xs text-muted">out: ' + fmtCost(sellOut) + '</div>' : ''}
+                    <div class="text-xs text-muted">per 1 Token</div>
+                  </td>
+                </tr>`;
+              }).join('');
+            })()}
+          </tbody>
+        </table>
+      </div>
     `;
   },
 
@@ -922,6 +1028,7 @@ window.Pages.costMargin = {
     const btnEditGlobal = document.getElementById('btn-edit-global-margin');
     if (btnEditGlobal) {
       btnEditGlobal.addEventListener('click', () => {
+        const todayISO = new Date().toISOString().split('T')[0];
         window.App.showModal(`
           <div class="modal">
             <button class="modal-close" onclick="App.closeModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -931,6 +1038,10 @@ window.Pages.costMargin = {
               <div class="form-group">
                 <label class="form-label">Global Margin (%)</label>
                 <input type="number" class="form-input" id="edit-global-margin" value="${mc.global}" step="0.1" min="0" max="99.99">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Effective Date <span class="text-xs text-muted">— วันที่เริ่มมีผลบังคับใช้</span></label>
+                <input type="date" class="form-input" id="edit-global-effective" value="${todayISO}" min="${todayISO}">
               </div>
               <div class="alert-warning">
                 <i class="fa-solid fa-triangle-exclamation"></i>
@@ -948,11 +1059,15 @@ window.Pages.costMargin = {
           if (!submitBtn) return;
           submitBtn.addEventListener('click', () => {
             const val = parseFloat(document.getElementById('edit-global-margin').value);
+            const effDate = document.getElementById('edit-global-effective').value;
             if (isNaN(val) || val < 0 || val >= 100) { App.toast('กรุณากรอก Margin ที่ถูกต้อง', 'error'); return; }
+            if (!effDate) { App.toast('กรุณาระบุ Effective Date', 'error'); return; }
             mc.global = val;
+            mc.effectiveDate = effDate;
             mc.modifiedDate = new Date().toISOString().split('T')[0];
             mc.modifiedBy = 'admin@realfact.ai';
             App.closeModal();
+            App.toast('บันทึก Global Margin สำเร็จ — มีผล ' + effDate, 'success');
             self._rerender();
           });
         }, 50);
@@ -965,14 +1080,21 @@ window.Pages.costMargin = {
         const idx = parseInt(btn.dataset.idx);
         const p = mc.providers[idx];
         if (!p) return;
+        const todayP = new Date().toISOString().split('T')[0];
         window.App.showModal(`
           <div class="modal">
             <button class="modal-close" onclick="App.closeModal()"><i class="fa-solid fa-xmark"></i></button>
             <div class="modal-title heading">แก้ไข Provider Margin</div>
             <div class="modal-subtitle">Provider: <span class="font-600">${p.name}</span></div>
-            <div class="form-group">
-              <label class="form-label">Margin (%)</label>
-              <input type="number" class="form-input" id="edit-provider-margin" value="${p.margin}" step="0.1" min="0" max="99.99">
+            <div class="flex-col gap-16">
+              <div class="form-group">
+                <label class="form-label">Margin (%)</label>
+                <input type="number" class="form-input" id="edit-provider-margin" value="${p.margin}" step="0.1" min="0" max="99.99">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Effective Date <span class="text-xs text-muted">— วันที่เริ่มมีผลบังคับใช้</span></label>
+                <input type="date" class="form-input" id="edit-provider-effective" value="${todayP}" min="${todayP}">
+              </div>
             </div>
             <div class="modal-actions">
               <button class="btn btn-outline" onclick="App.closeModal()">ยกเลิก</button>
@@ -985,11 +1107,15 @@ window.Pages.costMargin = {
           if (!submitBtn) return;
           submitBtn.addEventListener('click', () => {
             const val = parseFloat(document.getElementById('edit-provider-margin').value);
+            const effDate = document.getElementById('edit-provider-effective').value;
             if (isNaN(val) || val < 0 || val >= 100) { App.toast('กรุณากรอก Margin ที่ถูกต้อง', 'error'); return; }
+            if (!effDate) { App.toast('กรุณาระบุ Effective Date', 'error'); return; }
             p.margin = val;
+            p.effectiveDate = effDate;
             p.modifiedDate = new Date().toISOString().split('T')[0];
             p.modifiedBy = 'admin@realfact.ai';
             App.closeModal();
+            App.toast('บันทึก Provider Margin สำเร็จ — มีผล ' + effDate, 'success');
             self._rerender();
           });
         }, 50);
@@ -1072,7 +1198,7 @@ window.Pages.costMargin = {
         });
       }
 
-      // ─── Save override ───
+      // ─── Save override (with Effective Date modal) ───
       row.querySelectorAll('.sc-save-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const m = parseFloat(marginInp.value);
@@ -1080,17 +1206,41 @@ window.Pages.costMargin = {
             App.toast('กรุณากรอก Margin ที่ถูกต้อง (0–99.99%)', 'error');
             return;
           }
-          const existing = mc.serviceCodes.find(sc => sc.code === code);
-          const todayStr = new Date().toISOString().split('T')[0];
-          if (existing) {
-            existing.margin       = m;
-            existing.modifiedDate = todayStr;
-            existing.modifiedBy   = 'admin@realfact.ai';
-          } else {
-            mc.serviceCodes.push({ code, margin: m, modifiedDate: todayStr, modifiedBy: 'admin@realfact.ai' });
-          }
-          App.toast(`บันทึก Override: ${code} = ${m.toFixed(1)}%`, 'success');
-          self._rerender();
+          const todaySC = new Date().toISOString().split('T')[0];
+          App.showModal(`
+            <div class="modal">
+              <button class="modal-close" onclick="App.closeModal()"><i class="fa-solid fa-xmark"></i></button>
+              <div class="modal-title heading">ยืนยันบันทึก Override</div>
+              <div class="modal-subtitle">Service Code: <span class="mono font-600">${code}</span> → Margin ${m.toFixed(1)}%</div>
+              <div class="form-group">
+                <label class="form-label">Effective Date <span class="text-xs text-muted">— วันที่เริ่มมีผลบังคับใช้</span></label>
+                <input type="date" class="form-input" id="sc-save-effective" value="${todaySC}" min="${todaySC}">
+              </div>
+              <div class="modal-actions">
+                <button class="btn btn-outline" onclick="App.closeModal()">ยกเลิก</button>
+                <button class="btn btn-primary" id="sc-save-confirm"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>
+              </div>
+            </div>
+          `);
+          setTimeout(() => {
+            document.getElementById('sc-save-confirm')?.addEventListener('click', () => {
+              const effDate = document.getElementById('sc-save-effective').value;
+              if (!effDate) { App.toast('กรุณาระบุ Effective Date', 'error'); return; }
+              const existing = mc.serviceCodes.find(sc => sc.code === code);
+              const todayStr = new Date().toISOString().split('T')[0];
+              if (existing) {
+                existing.margin        = m;
+                existing.effectiveDate = effDate;
+                existing.modifiedDate  = todayStr;
+                existing.modifiedBy    = 'admin@realfact.ai';
+              } else {
+                mc.serviceCodes.push({ code, margin: m, effectiveDate: effDate, modifiedDate: todayStr, modifiedBy: 'admin@realfact.ai' });
+              }
+              App.closeModal();
+              App.toast(`บันทึก Override: ${code} = ${m.toFixed(1)}% — มีผล ${effDate}`, 'success');
+              self._rerender();
+            });
+          }, 50);
         });
       });
     });

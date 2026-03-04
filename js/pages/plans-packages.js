@@ -26,8 +26,9 @@ window.Pages.plansPackages = {
 
   // ─── SP meta (colors, icons, labels) ───
   _spMeta: {
-    'avatar':  { color: 'var(--primary)', bg: 'rgba(241,91,38,.15)',   icon: 'fa-robot',          abbr: 'AVATAR'  },
-    'booking': { color: '#3b82f6',         bg: 'rgba(59,130,246,.15)',  icon: 'fa-calendar-check', abbr: 'BOOKING' },
+    'avatar':    { color: 'var(--primary)', bg: 'rgba(241,91,38,.15)',   icon: 'fa-robot',          abbr: 'AVATAR'     },
+    'booking':   { color: '#3b82f6',         bg: 'rgba(59,130,246,.15)',  icon: 'fa-calendar-check', abbr: 'BOOKING'    },
+    'devportal': { color: '#8b5cf6',         bg: 'rgba(139,92,246,.15)',  icon: 'fa-code',           abbr: 'DEV PORTAL' },
   },
   _getSpMeta(code) {
     return window.Pages.plansPackages._spMeta[code] || {
@@ -197,6 +198,31 @@ window.Pages.plansPackages = {
           `}
         </div>`;
       }).join('')}
+
+      <!-- Developer Portal Info Banner -->
+      <div class="card p-20 mb-32" style="border-left:4px solid #8b5cf6;background:rgba(139,92,246,.04);">
+        <div class="flex items-center gap-12 mb-12">
+          <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:8px;
+            background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid #8b5cf6;
+            font-size:12px;font-weight:700;letter-spacing:1px;">
+            <i class="fa-solid fa-code" style="font-size:11px;"></i> DEV PORTAL
+          </div>
+          <span class="font-700">Developer Portal</span>
+          <span class="chip chip-purple" style="font-size:11px;background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid #8b5cf640;">Credit Line Model</span>
+        </div>
+        <div class="text-sm mb-12" style="line-height:1.6;">
+          Developer Portal ไม่ใช้ระบบ Subscription Plans แต่ใช้ <strong>Credit Line</strong> เป็นโมเดลการเรียกเก็บเงิน
+          Tenant ของ DP จะได้รับวงเงินเครดิตและถูกเรียกเก็บตามการใช้งาน API จริง
+        </div>
+        <div class="flex gap-12 flex-wrap">
+          <a href="#billing-credit" onclick="App.navigate('billing-credit')" class="btn btn-sm btn-outline" style="border-color:#8b5cf6;color:#8b5cf6;">
+            <i class="fa-solid fa-handshake-angle"></i> Billing & Credit
+          </a>
+          <a href="#dp-tenants" onclick="App.navigate('dp-tenants')" class="btn btn-sm btn-outline" style="border-color:#8b5cf6;color:#8b5cf6;">
+            <i class="fa-solid fa-users"></i> DP Tenants
+          </a>
+        </div>
+      </div>
     `;
   },
 

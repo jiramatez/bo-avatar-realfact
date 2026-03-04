@@ -31,11 +31,16 @@
     'devices':          { title: 'Device Operations',   module: 'devices',         ctx: 'avatar' },
     'service-builder':  { title: 'Assign Avatar',        module: 'serviceBuilder',  ctx: 'avatar' },
     'knowledge-base':   { title: 'Knowledge Base',      module: 'knowledgeBase',   ctx: 'avatar' },
+    'dp-dashboard':       { title: 'Developer Portal Dashboard', module: 'dpDashboard',       ctx: 'devportal' },
+    'dp-tenants':         { title: 'Developer Portal Tenants',   module: 'dpTenants',         ctx: 'devportal' },
+    'dp-api-presets':     { title: 'API Presets',                module: 'dpApiPresets',      ctx: 'devportal' },
+    'dp-assign-endpoint': { title: 'Assign Endpoint',           module: 'dpAssignEndpoint',  ctx: 'devportal' },
   };
 
   const contextMeta = {
     backoffice: { label: 'Central Backoffice', sub: 'Platform Management',  icon: 'fa-building', defaultPage: 'dashboard' },
     avatar:     { label: 'RealFact Avatar',    sub: 'Sub-Platform Modules', icon: 'fa-robot',    defaultPage: 'avatar-dashboard' },
+    devportal:  { label: 'Developer Portal',   sub: 'API Management',       icon: 'fa-code',     defaultPage: 'dp-dashboard' },
   };
 
   const content = document.getElementById('content');

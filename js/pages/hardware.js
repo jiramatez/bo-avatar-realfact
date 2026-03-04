@@ -125,6 +125,7 @@ window.Pages.hardware = {
             <thead>
               <tr>
                 <th>S/N</th>
+                <th>MAC Address</th>
                 <th>ชื่ออุปกรณ์</th>
                 <th>รุ่น</th>
                 <th>Register Code</th>
@@ -138,8 +139,9 @@ window.Pages.hardware = {
             </thead>
             <tbody id="hw-device-tbody">
               ${devices.map(dv => `
-                <tr data-sn="${dv.sn}" data-status="${dv.status}" data-tenant="${dv.soldTo || ''}" data-search="${dv.sn} ${dv.name} ${dv.registerCode} ${dv.soldToName || ''}">
+                <tr data-sn="${dv.sn}" data-status="${dv.status}" data-tenant="${dv.soldTo || ''}" data-search="${dv.sn} ${dv.name} ${dv.registerCode} ${dv.soldToName || ''} ${dv.macAddress || ''}">
                   <td class="mono">${dv.sn}</td>
+                  <td class="mono text-sm">${dv.macAddress || '<span class="text-muted">-</span>'}</td>
                   <td>
                     <span class="font-600 hw-edit-name" data-sn="${dv.sn}" style="cursor:pointer;border-bottom:1px dashed var(--text-dim);" title="คลิกเพื่อแก้ไขชื่อ">${dv.name}</span>
                   </td>
@@ -287,6 +289,10 @@ window.Pages.hardware = {
               <input class="form-input" id="modal-sn" placeholder="RF-2025-XXXXX">
             </div>
             <div class="form-group">
+              <label class="form-label">MAC Address</label>
+              <input class="form-input mono" id="modal-mac" placeholder="XX:XX:XX:XX:XX:XX" maxlength="17">
+            </div>
+            <div class="form-group">
               <label class="form-label">ชื่ออุปกรณ์</label>
               <input class="form-input" id="modal-name" placeholder="เช่น ตู้ล็อบบี้ ชั้น 1">
             </div>
@@ -305,17 +311,27 @@ window.Pages.hardware = {
         if (!submitBtn) return;
         submitBtn.addEventListener('click', () => {
           const snVal    = document.getElementById('modal-sn').value.trim();
+          const macRaw   = document.getElementById('modal-mac').value.trim().toUpperCase();
           const nameVal  = document.getElementById('modal-name').value.trim();
           const modelSel = document.getElementById('modal-model');
           const modelId  = modelSel.value;
           const modelName = modelSel.selectedOptions[0]?.dataset.name || '';
 
-          if (!snVal || !nameVal || !modelId) {
+          if (!snVal || !macRaw || !nameVal || !modelId) {
             App.toast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
             return;
           }
           if (d.devices.find(dv => dv.sn === snVal)) {
             App.toast('S/N นี้มีอยู่ในระบบแล้ว', 'error');
+            return;
+          }
+          const macVal = macRaw;
+          if (!/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(macVal)) {
+            App.toast('MAC Address ไม่ถูกต้อง (รูปแบบ XX:XX:XX:XX:XX:XX)', 'error');
+            return;
+          }
+          if (d.devices.find(dv => dv.macAddress === macVal)) {
+            App.toast('MAC Address นี้มีอยู่ในระบบแล้ว', 'error');
             return;
           }
 
@@ -324,6 +340,7 @@ window.Pages.hardware = {
 
           d.devices.push({
             sn: snVal,
+            macAddress: macVal,
             name: nameVal,
             model: modelId,
             modelName: modelName,
@@ -426,7 +443,7 @@ window.Pages.hardware = {
         <div class="modal modal-wide">
           <button class="modal-close" onclick="App.closeModal()"><i class="fa-solid fa-xmark"></i></button>
           <div class="modal-title heading">นำเข้าอุปกรณ์จำนวนมาก (CSV)</div>
-          <div class="modal-subtitle">รองรับไฟล์ CSV รูปแบบ: sn, name, model, registerCode</div>
+          <div class="modal-subtitle">รองรับไฟล์ CSV รูปแบบ: sn, macAddress, name, model, registerCode</div>
           <div class="flex-col gap-16">
             <div class="form-group">
               <label class="form-label">อัปโหลดไฟล์ CSV</label>
@@ -438,7 +455,7 @@ window.Pages.hardware = {
             </div>
             <div class="form-group">
               <label class="form-label">ตัวอย่าง / วางข้อมูล CSV</label>
-              <textarea class="form-input" id="csv-preview" rows="6" placeholder="sn,name,model,registerCode\nRF-2025-00101,ตู้ชั้น 1,DM-001,AV-ABC123\nRF-2025-00102,ตู้ชั้น 2,DM-002,AV-XYZ789" style="font-family:monospace;font-size:12px;"></textarea>
+              <textarea class="form-input" id="csv-preview" rows="6" placeholder="sn,macAddress,name,model,registerCode&#10;RF-2025-00101,AC:DE:48:00:11:01,ตู้ชั้น 1,DM-001,AV-ABC123&#10;RF-2025-00102,,ตู้ชั้น 2,DM-002,AV-XYZ789" style="font-family:monospace;font-size:12px;"></textarea>
             </div>
           </div>
           <div class="modal-actions">
@@ -477,12 +494,14 @@ window.Pages.hardware = {
           lines.forEach(line => {
             const parts = line.split(',').map(p => p.trim());
             if (parts.length < 2) return;
-            const [sn, name, model, regCode] = parts;
+            const [sn, macAddress, name, model, regCode] = parts;
             if (!sn || d.devices.find(dv => dv.sn === sn)) return;
             const modelObj  = d.deviceModels.find(m => m.id === model);
             const today     = new Date().toISOString().split('T')[0];
+            const macVal    = (macAddress && /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(macAddress)) ? macAddress.toUpperCase() : null;
             d.devices.push({
               sn,
+              macAddress: macVal,
               name: name || sn,
               model: model || '',
               modelName: modelObj ? modelObj.name : (model || ''),
@@ -506,7 +525,7 @@ window.Pages.hardware = {
 
     // ─── 4. Export CSV ───
     document.getElementById('btn-export-csv').addEventListener('click', () => {
-      const headers = ['sn', 'name', 'model', 'modelName', 'registerCode', 'status', 'soldTo', 'soldToName', 'regDate', 'soldDate', 'activationDate'];
+      const headers = ['sn', 'macAddress', 'name', 'model', 'modelName', 'registerCode', 'status', 'soldTo', 'soldToName', 'regDate', 'soldDate', 'activationDate'];
       const rows = [
         headers.join(','),
         ...d.devices.map(dv =>

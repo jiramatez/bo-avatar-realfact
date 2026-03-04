@@ -37,16 +37,16 @@ window.MockData = {
 
   // ─── Hardware Inventory (Devices) ───
   devices: [
-    { sn: 'RF-2024-00001', name: 'ตู้ล็อบบี้ ชั้น 1',       model: 'DM-001', modelName: 'Pro 55"',     registerCode: 'AV-X7K9M2', status: 'Activated',     soldTo: 'T-001', soldToName: 'ABC Corporation',     activatedBy: 'T-001', regDate: '2025-11-15', soldDate: '2025-12-01', activationDate: '2025-12-05', online: true,  modifiedDate: '2025-12-05', modifiedBy: 'admin@realfact.ai' },
-    { sn: 'RF-2024-00002', name: 'ตู้ต้อนรับ สาขาสยาม',     model: 'DM-002', modelName: 'Mini 32"',    registerCode: 'AV-B3P5Q8', status: 'Activated',     soldTo: 'T-001', soldToName: 'ABC Corporation',     activatedBy: 'T-001', regDate: '2025-11-15', soldDate: '2025-12-01', activationDate: '2025-12-08', online: true,  modifiedDate: '2025-12-08', modifiedBy: 'admin@realfact.ai' },
-    { sn: 'RF-2024-00003', name: 'Kiosk ชั้น 3 อาคาร A',    model: 'DM-001', modelName: 'Pro 55"',     registerCode: 'AV-D9H2L6', status: 'Activated',     soldTo: 'T-002', soldToName: 'XYZ Trading',         activatedBy: 'T-002', regDate: '2025-12-01', soldDate: '2025-12-15', activationDate: '2025-12-20', online: false, modifiedDate: '2025-12-20', modifiedBy: 'admin@realfact.ai' },
-    { sn: 'RF-2024-00004', name: 'ตู้หน้าสำนักงาน',         model: 'DM-004', modelName: 'Ultra 65"',   registerCode: 'AV-F4N7R3', status: 'Activated',     soldTo: 'T-003', soldToName: 'Thai Finance Group', activatedBy: 'T-003', regDate: '2025-12-10', soldDate: '2026-01-05', activationDate: '2026-01-10', online: true,  modifiedDate: '2026-01-10', modifiedBy: 'admin@realfact.ai' },
-    { sn: 'RF-2024-00005', name: 'Device #5',                model: 'DM-002', modelName: 'Mini 32"',    registerCode: 'AV-G8T2W5', status: 'Sold',          soldTo: 'T-004', soldToName: 'Bangkok Tech Co.',   activatedBy: null,    regDate: '2026-01-15', soldDate: '2026-02-01', activationDate: null,         online: false, modifiedDate: '2026-02-01', modifiedBy: 'admin@realfact.ai' },
-    { sn: 'RF-2024-00006', name: 'Device #6',                model: 'DM-001', modelName: 'Pro 55"',     registerCode: 'AV-J6Y9K4', status: 'Registered',    soldTo: null,    soldToName: null,                activatedBy: null,    regDate: '2026-02-20', soldDate: null,         activationDate: null,         online: false, modifiedDate: '2026-02-20', modifiedBy: 'admin@realfact.ai' },
-    { sn: 'RF-2024-00007', name: 'ตู้ทดสอบ QA',             model: 'DM-003', modelName: 'Compact 27"', registerCode: 'AV-M2C8V7', status: 'Decommissioned', soldTo: 'T-001', soldToName: 'ABC Corporation',   activatedBy: 'T-001', regDate: '2025-06-01', soldDate: '2025-07-01', activationDate: '2025-07-05', online: false, modifiedDate: '2026-01-15', modifiedBy: 'super@realfact.ai' },
-    { sn: 'RF-2025-00008', name: 'ตู้สาขาเชียงใหม่',        model: 'DM-002', modelName: 'Mini 32"',    registerCode: 'AV-P5E3A9', status: 'Activated',     soldTo: 'T-005', soldToName: 'Northern Star Hotel', activatedBy: 'T-005', regDate: '2026-01-20', soldDate: '2026-02-10', activationDate: '2026-02-15', online: true,  modifiedDate: '2026-02-15', modifiedBy: 'admin@realfact.ai' },
-    { sn: 'RF-2025-00009', name: 'ตู้ Reception Tower B',    model: 'DM-004', modelName: 'Ultra 65"',   registerCode: 'AV-S7U4Z1', status: 'Activated',     soldTo: 'T-003', soldToName: 'Thai Finance Group', activatedBy: 'T-003', regDate: '2026-02-01', soldDate: '2026-02-15', activationDate: '2026-02-20', online: true,  modifiedDate: '2026-02-20', modifiedBy: 'admin@realfact.ai' },
-    { sn: 'RF-2025-00010', name: 'Device #10',               model: 'DM-001', modelName: 'Pro 55"',     registerCode: 'AV-W3H6B8', status: 'Sold',          soldTo: 'T-006', soldToName: 'Phuket Resort & Spa', activatedBy: null,   regDate: '2026-02-25', soldDate: '2026-03-01', activationDate: null,         online: false, modifiedDate: '2026-03-01', modifiedBy: 'admin@realfact.ai' },
+    { sn: 'RF-2024-00001', macAddress: 'AC:DE:48:00:11:01', name: 'ตู้ล็อบบี้ ชั้น 1',       model: 'DM-001', modelName: 'Pro 55"',     registerCode: 'AV-X7K9M2', status: 'Activated',     soldTo: 'T-001', soldToName: 'ABC Corporation',     activatedBy: 'T-001', regDate: '2025-11-15', soldDate: '2025-12-01', activationDate: '2025-12-05', online: true,  modifiedDate: '2025-12-05', modifiedBy: 'admin@realfact.ai' },
+    { sn: 'RF-2024-00002', macAddress: 'AC:DE:48:00:11:02', name: 'ตู้ต้อนรับ สาขาสยาม',     model: 'DM-002', modelName: 'Mini 32"',    registerCode: 'AV-B3P5Q8', status: 'Activated',     soldTo: 'T-001', soldToName: 'ABC Corporation',     activatedBy: 'T-001', regDate: '2025-11-15', soldDate: '2025-12-01', activationDate: '2025-12-08', online: true,  modifiedDate: '2025-12-08', modifiedBy: 'admin@realfact.ai' },
+    { sn: 'RF-2024-00003', macAddress: 'AC:DE:48:00:11:03', name: 'Kiosk ชั้น 3 อาคาร A',    model: 'DM-001', modelName: 'Pro 55"',     registerCode: 'AV-D9H2L6', status: 'Activated',     soldTo: 'T-002', soldToName: 'XYZ Trading',         activatedBy: 'T-002', regDate: '2025-12-01', soldDate: '2025-12-15', activationDate: '2025-12-20', online: false, modifiedDate: '2025-12-20', modifiedBy: 'admin@realfact.ai' },
+    { sn: 'RF-2024-00004', macAddress: 'AC:DE:48:00:11:04', name: 'ตู้หน้าสำนักงาน',         model: 'DM-004', modelName: 'Ultra 65"',   registerCode: 'AV-F4N7R3', status: 'Activated',     soldTo: 'T-003', soldToName: 'Thai Finance Group', activatedBy: 'T-003', regDate: '2025-12-10', soldDate: '2026-01-05', activationDate: '2026-01-10', online: true,  modifiedDate: '2026-01-10', modifiedBy: 'admin@realfact.ai' },
+    { sn: 'RF-2024-00005', macAddress: 'AC:DE:48:00:11:05', name: 'Device #5',                model: 'DM-002', modelName: 'Mini 32"',    registerCode: 'AV-G8T2W5', status: 'Sold',          soldTo: 'T-004', soldToName: 'Bangkok Tech Co.',   activatedBy: null,    regDate: '2026-01-15', soldDate: '2026-02-01', activationDate: null,         online: false, modifiedDate: '2026-02-01', modifiedBy: 'admin@realfact.ai' },
+    { sn: 'RF-2024-00006', macAddress: null,                 name: 'Device #6',                model: 'DM-001', modelName: 'Pro 55"',     registerCode: 'AV-J6Y9K4', status: 'Registered',    soldTo: null,    soldToName: null,                activatedBy: null,    regDate: '2026-02-20', soldDate: null,         activationDate: null,         online: false, modifiedDate: '2026-02-20', modifiedBy: 'admin@realfact.ai' },
+    { sn: 'RF-2024-00007', macAddress: 'AC:DE:48:00:11:07', name: 'ตู้ทดสอบ QA',             model: 'DM-003', modelName: 'Compact 27"', registerCode: 'AV-M2C8V7', status: 'Decommissioned', soldTo: 'T-001', soldToName: 'ABC Corporation',   activatedBy: 'T-001', regDate: '2025-06-01', soldDate: '2025-07-01', activationDate: '2025-07-05', online: false, modifiedDate: '2026-01-15', modifiedBy: 'super@realfact.ai' },
+    { sn: 'RF-2025-00008', macAddress: 'AC:DE:48:00:12:08', name: 'ตู้สาขาเชียงใหม่',        model: 'DM-002', modelName: 'Mini 32"',    registerCode: 'AV-P5E3A9', status: 'Activated',     soldTo: 'T-005', soldToName: 'Northern Star Hotel', activatedBy: 'T-005', regDate: '2026-01-20', soldDate: '2026-02-10', activationDate: '2026-02-15', online: true,  modifiedDate: '2026-02-15', modifiedBy: 'admin@realfact.ai' },
+    { sn: 'RF-2025-00009', macAddress: 'AC:DE:48:00:12:09', name: 'ตู้ Reception Tower B',    model: 'DM-004', modelName: 'Ultra 65"',   registerCode: 'AV-S7U4Z1', status: 'Activated',     soldTo: 'T-003', soldToName: 'Thai Finance Group', activatedBy: 'T-003', regDate: '2026-02-01', soldDate: '2026-02-15', activationDate: '2026-02-20', online: true,  modifiedDate: '2026-02-20', modifiedBy: 'admin@realfact.ai' },
+    { sn: 'RF-2025-00010', macAddress: 'AC:DE:48:00:12:10', name: 'Device #10',               model: 'DM-001', modelName: 'Pro 55"',     registerCode: 'AV-W3H6B8', status: 'Sold',          soldTo: 'T-006', soldToName: 'Phuket Resort & Spa', activatedBy: null,   regDate: '2026-02-25', soldDate: '2026-03-01', activationDate: null,         online: false, modifiedDate: '2026-03-01', modifiedBy: 'admin@realfact.ai' },
   ],
 
   // ─── Tenants ───
@@ -106,6 +106,13 @@ window.MockData = {
     { id: 'INV-202603-00004', tenantId: 'T-005', tenantName: 'Northern Star Hotel', subPlatform: 'Avatar', type: 'Subscription', description: 'Avatar Pro - March 2026',     amount: 4990, vat: 349.30, total: 5339.30, status: 'Pending Verification', issuedDate: '2026-03-01', dueDate: '2026-03-15', paidDate: null,         method: 'Bank Transfer' },
     { id: 'INV-202602-00012', tenantId: 'T-001', tenantName: 'ABC Corporation',    subPlatform: 'Avatar', type: 'Token Top-up', description: 'Token Top-up (5,000 tokens)', amount: 2500, vat: 175.00, total: 2675.00, status: 'Paid',                 issuedDate: '2026-02-14', dueDate: '2026-02-28', paidDate: '2026-02-14', method: 'Card (2C2P)' },
     { id: 'INV-202602-00008', tenantId: 'T-008', tenantName: 'Sunrise Education',  subPlatform: 'Avatar', type: 'Subscription', description: 'Avatar Starter - Feb 2026',   amount: 990,  vat: 69.30,  total: 1059.30, status: 'Overdue',              issuedDate: '2026-02-01', dueDate: '2026-02-15', paidDate: null,         method: null },
+    // ── Developer Portal — Credit Line Invoices ──
+    { id: 'INV-DEV-202602-001', tenantId: 'T-DP-001', tenantName: 'FinTech Co., Ltd.',  subPlatform: 'Developer Portal', type: 'Credit Line', description: 'API Usage — Feb 2026',  amount: 38500, vat: 2695.00, total: 41195.00, status: 'Paid',    issuedDate: '2026-02-28', dueDate: '2026-03-30', paidDate: '2026-03-05', method: 'Bank Transfer' },
+    { id: 'INV-DEV-202601-001', tenantId: 'T-DP-001', tenantName: 'FinTech Co., Ltd.',  subPlatform: 'Developer Portal', type: 'Credit Line', description: 'API Usage — Jan 2026',  amount: 31200, vat: 2184.00, total: 33384.00, status: 'Paid',    issuedDate: '2026-01-31', dueDate: '2026-03-02', paidDate: '2026-02-20', method: 'Bank Transfer' },
+    { id: 'INV-DEV-202602-002', tenantId: 'T-DP-002', tenantName: 'DataDriven Ltd.',    subPlatform: 'Developer Portal', type: 'Credit Line', description: 'API Usage — Feb 2026',  amount: 15200, vat: 1064.00, total: 16264.00, status: 'Paid',    issuedDate: '2026-02-28', dueDate: '2026-03-30', paidDate: '2026-03-08', method: 'Bank Transfer' },
+    { id: 'INV-DEV-202603-001', tenantId: 'T-DP-001', tenantName: 'FinTech Co., Ltd.',  subPlatform: 'Developer Portal', type: 'Credit Line', description: 'API Usage — Mar 2026',  amount: 42800, vat: 2996.00, total: 45796.00, status: 'Issued',  issuedDate: '2026-03-01', dueDate: '2026-03-31', paidDate: null,         method: null },
+    { id: 'INV-DEV-202603-002', tenantId: 'T-DP-002', tenantName: 'DataDriven Ltd.',    subPlatform: 'Developer Portal', type: 'Credit Line', description: 'API Usage — Mar 2026',  amount: 18500, vat: 1295.00, total: 19795.00, status: 'Issued',  issuedDate: '2026-03-01', dueDate: '2026-03-31', paidDate: null,         method: null },
+    { id: 'INV-DEV-202603-003', tenantId: 'T-DP-003', tenantName: 'SmartBot Inc.',      subPlatform: 'Developer Portal', type: 'Credit Line', description: 'API Usage — Mar 2026',  amount: 24800, vat: 1736.00, total: 26536.00, status: 'Issued',  issuedDate: '2026-03-01', dueDate: '2026-03-15', paidDate: null,         method: null },
   ],
 
   // ─── Purchase Log ───
@@ -116,6 +123,10 @@ window.MockData = {
     { date: '2026-03-01', tenantName: 'XYZ Trading', subPlatform: 'Avatar', type: 'Subscription', description: 'Avatar Starter - Monthly', method: '-', amount: 1059.30, status: 'Pending', ref: 'RF-2603-0003' },
     { date: '2026-02-14', tenantName: 'ABC Corporation', subPlatform: 'Avatar', type: 'Token Top-up', description: 'Token Top-up (5,000 tokens)', method: 'Card (2C2P)', amount: 2675.00, status: 'Completed', ref: 'RF-2602-0012' },
     { date: '2026-02-01', tenantName: 'Sunrise Education', subPlatform: 'Avatar', type: 'Subscription', description: 'Avatar Starter - Monthly', method: '-', amount: 1059.30, status: 'Overdue', ref: 'RF-2602-0008' },
+    // ── Developer Portal — Credit Line Purchase Log ──
+    { date: '2026-03-05', tenantName: 'FinTech Co., Ltd.',  subPlatform: 'Developer Portal', type: 'Credit Line', description: 'API Usage — Feb 2026',  method: 'Bank Transfer', amount: 41195.00, status: 'Completed', ref: 'RF-DEV-2603-0001' },
+    { date: '2026-02-20', tenantName: 'FinTech Co., Ltd.',  subPlatform: 'Developer Portal', type: 'Credit Line', description: 'API Usage — Jan 2026',  method: 'Bank Transfer', amount: 33384.00, status: 'Completed', ref: 'RF-DEV-2602-0001' },
+    { date: '2026-03-08', tenantName: 'DataDriven Ltd.',    subPlatform: 'Developer Portal', type: 'Credit Line', description: 'API Usage — Feb 2026',  method: 'Bank Transfer', amount: 16264.00, status: 'Completed', ref: 'RF-DEV-2603-0002' },
   ],
 
   // ─── Payment Verification Log (append-only) ───
@@ -174,11 +185,29 @@ window.MockData = {
     { id: 'CL-001', tenantId: 'T-003', tenantName: 'Thai Finance Group', creditLimit: 100000, usedAmount: 42800,  availableCredit: 57200, billingCycle: 30, paymentTerms: 'Net 30', status: 'Active',    approvedDate: '2026-01-10', approvedBy: 'Finance Admin', lastInvoice: 'INV-202603-00002', modifiedDate: '2026-03-01', modifiedBy: 'finance@realfact.ai' },
     { id: 'CL-002', tenantId: 'T-001', tenantName: 'ABC Corporation',    creditLimit: 50000,  usedAmount: 15420,  availableCredit: 34580, billingCycle: 30, paymentTerms: 'Net 30', status: 'Active',    approvedDate: '2025-12-01', approvedBy: 'Finance Admin', lastInvoice: 'INV-202603-00001', modifiedDate: '2026-02-01', modifiedBy: 'finance@realfact.ai' },
     { id: 'CL-003', tenantId: 'T-008', tenantName: 'Sunrise Education',  creditLimit: 20000,  usedAmount: 1059.30,availableCredit: 0,     billingCycle: 30, paymentTerms: 'Net 30', status: 'Suspended', approvedDate: '2025-10-20', approvedBy: 'Finance Admin', lastInvoice: 'INV-202602-00008', modifiedDate: '2026-01-21', modifiedBy: 'finance@realfact.ai' },
+    // ── Developer Portal Credit Lines ──
+    { id: 'CL-DP-001', tenantId: 'T-DP-001', tenantName: 'FinTech Co., Ltd.',  source: 'Developer Portal', creditLimit: 100000, usedAmount: 42800,  availableCredit: 57200, billingCycle: 30, paymentTerms: 'Net 30', status: 'Active', approvedDate: '2025-11-20', approvedBy: 'Finance Admin', lastInvoice: 'INV-DEV-202603-001', modifiedDate: '2026-03-01', modifiedBy: 'finance@realfact.ai' },
+    { id: 'CL-DP-002', tenantId: 'T-DP-002', tenantName: 'DataDriven Ltd.',    source: 'Developer Portal', creditLimit: 50000,  usedAmount: 18500,  availableCredit: 31500, billingCycle: 30, paymentTerms: 'Net 30', status: 'Active', approvedDate: '2026-01-15', approvedBy: 'Finance Admin', lastInvoice: 'INV-DEV-202603-002', modifiedDate: '2026-03-01', modifiedBy: 'finance@realfact.ai' },
+    { id: 'CL-DP-003', tenantId: 'T-DP-003', tenantName: 'SmartBot Inc.',      source: 'Developer Portal', creditLimit: 30000,  usedAmount: 24800,  availableCredit: 5200,  billingCycle: 30, paymentTerms: 'Net 15', status: 'Active', approvedDate: '2026-02-05', approvedBy: 'Finance Admin', lastInvoice: 'INV-DEV-202603-003', modifiedDate: '2026-03-01', modifiedBy: 'finance@realfact.ai' },
+    { id: 'CL-DP-004', tenantId: 'T-DP-004', tenantName: 'CloudNine Tech',     source: 'Developer Portal', creditLimit: 80000,  usedAmount: 0,      availableCredit: 80000, billingCycle: 60, paymentTerms: 'Net 60', status: 'Active', approvedDate: '2025-12-10', approvedBy: 'Finance Admin', lastInvoice: null,                 modifiedDate: '2025-12-10', modifiedBy: 'finance@realfact.ai' },
   ],
 
   // ─── Credit Line Requests ───
   creditLineRequests: [
     { id: 'CLR-001', tenantId: 'T-005', tenantName: 'Northern Star Hotel', requestedLimit: 80000, companyName: 'Northern Star Hotel Co., Ltd.', taxId: '0105565012345', documents: 2, status: 'Pending', requestDate: '2026-03-01', reviewedBy: null, modifiedDate: '2026-03-01', modifiedBy: 'finance@realfact.ai' },
+  ],
+
+  // ─── Credit Line Approval Log ───
+  creditLineApprovalLog: [
+    { id: 'CLOG-001', creditLineId: 'CL-001', tenantId: 'T-003', tenantName: 'Thai Finance Group',  action: 'Approved',       detail: 'อนุมัติวงเงิน ฿100,000 · รอบบิล 30 วัน · Net 30', actionBy: 'finance@realfact.ai', actionDate: '2026-01-10', actionTime: '09:30' },
+    { id: 'CLOG-002', creditLineId: 'CL-002', tenantId: 'T-001', tenantName: 'ABC Corporation',     action: 'Approved',       detail: 'อนุมัติวงเงิน ฿50,000 · รอบบิล 30 วัน · Net 30',  actionBy: 'finance@realfact.ai', actionDate: '2025-12-01', actionTime: '14:20' },
+    { id: 'CLOG-003', creditLineId: 'CL-003', tenantId: 'T-008', tenantName: 'Sunrise Education',   action: 'Approved',       detail: 'อนุมัติวงเงิน ฿20,000 · รอบบิล 30 วัน · Net 30',  actionBy: 'finance@realfact.ai', actionDate: '2025-10-20', actionTime: '11:00' },
+    { id: 'CLOG-004', creditLineId: 'CL-003', tenantId: 'T-008', tenantName: 'Sunrise Education',   action: 'Suspended',      detail: 'ระงับวงเงินเครดิต — ค้างชำระเกินกำหนด',            actionBy: 'finance@realfact.ai', actionDate: '2026-01-21', actionTime: '16:45' },
+    { id: 'CLOG-005', creditLineId: 'CL-DP-001', tenantId: 'T-DP-001', tenantName: 'FinTech Co., Ltd.',   action: 'Approved', detail: 'อนุมัติวงเงิน ฿100,000 · รอบบิล 30 วัน · Net 30', actionBy: 'finance@realfact.ai', actionDate: '2025-11-15', actionTime: '10:00' },
+    { id: 'CLOG-006', creditLineId: 'CL-DP-002', tenantId: 'T-DP-002', tenantName: 'HealthTech Solutions', action: 'Approved', detail: 'อนุมัติวงเงิน ฿50,000 · รอบบิล 30 วัน · Net 30',  actionBy: 'finance@realfact.ai', actionDate: '2025-12-01', actionTime: '13:15' },
+    { id: 'CLOG-007', creditLineId: 'CL-DP-003', tenantId: 'T-DP-003', tenantName: 'EduSmart Platform',   action: 'Approved', detail: 'อนุมัติวงเงิน ฿30,000 · รอบบิล 30 วัน · Net 30',  actionBy: 'finance@realfact.ai', actionDate: '2026-01-05', actionTime: '09:45' },
+    { id: 'CLOG-008', creditLineId: 'CL-DP-004', tenantId: 'T-DP-004', tenantName: 'RetailPOS Corp.',     action: 'Approved', detail: 'อนุมัติวงเงิน ฿200,000 · รอบบิล 30 วัน · Net 30', actionBy: 'finance@realfact.ai', actionDate: '2026-02-01', actionTime: '11:30' },
+    { id: 'CLOG-009', creditLineId: 'CL-001', tenantId: 'T-003', tenantName: 'Thai Finance Group',  action: 'Edited',         detail: 'แก้ไขวงเงิน ฿80,000 → ฿100,000',                  actionBy: 'finance@realfact.ai', actionDate: '2026-03-01', actionTime: '15:10' },
   ],
 
   // ─── Cost Change Requests (M-BE-05 FR30-32) ───
@@ -347,18 +376,19 @@ window.MockData = {
 
   // ─── Analytics: Revenue by Sub-Platform monthly ───
   revenueBySubPlatform: [
-    { month: 'Sep 25', avatar:  6500, booking:  4000 },
-    { month: 'Oct 25', avatar:  9200, booking:  5000 },
-    { month: 'Nov 25', avatar: 15600, booking:  3300 },
-    { month: 'Dec 25', avatar: 19800, booking:  4700 },
-    { month: 'Jan 26', avatar: 29200, booking:  2300 },
-    { month: 'Feb 26', avatar: 44300, booking: 13400 },
+    { month: 'Sep 25', avatar:  6500, booking:  4000, devportal:     0 },
+    { month: 'Oct 25', avatar:  9200, booking:  5000, devportal:     0 },
+    { month: 'Nov 25', avatar: 15600, booking:  3300, devportal:  3100 },
+    { month: 'Dec 25', avatar: 19800, booking:  4700, devportal:  8400 },
+    { month: 'Jan 26', avatar: 29200, booking:  2300, devportal: 31200 },
+    { month: 'Feb 26', avatar: 44300, booking: 13400, devportal: 53700 },
   ],
 
   // ─── Analytics: Sub-Platform Revenue current period ───
   subPlatformRevenue: [
-    { name: 'Live Interact', code: 'avatar',  revenue: 20970 },
-    { name: 'AI Booking',    code: 'booking', revenue: 10580 },
+    { name: 'Live Interact',    code: 'avatar',    revenue: 20970 },
+    { name: 'AI Booking',       code: 'booking',   revenue: 10580 },
+    { name: 'Developer Portal', code: 'devportal', revenue: 86100 },
   ],
 
   // ─── Analytics: Daily Revenue Feb 2026 ───
@@ -386,11 +416,14 @@ window.MockData = {
 
   // ─── Analytics: Top Tenants by Spend ───
   topTenantsBySpend: [
-    { rank: 1, name: 'GHI Co',              subscriptions: 2, revenue: 24980 },
-    { rank: 2, name: 'ABC Corp',             subscriptions: 2, revenue:  5580 },
-    { rank: 3, name: 'Thai Finance Group',   subscriptions: 1, revenue:  4990 },
-    { rank: 4, name: 'Northern Star Hotel',  subscriptions: 1, revenue:  4990 },
-    { rank: 5, name: 'XYZ Trading',          subscriptions: 1, revenue:  2970 },
+    { rank: 1, name: 'FinTech Co., Ltd.',    subscriptions: 'Credit Line', revenue: 42800, source: 'devportal', revenueType: 'Credit Line' },
+    { rank: 2, name: 'GHI Co',              subscriptions: 2, revenue: 24980 },
+    { rank: 3, name: 'SmartBot Inc.',        subscriptions: 'Credit Line', revenue: 24800, source: 'devportal', revenueType: 'Credit Line' },
+    { rank: 4, name: 'DataDriven Ltd.',      subscriptions: 'Credit Line', revenue: 18500, source: 'devportal', revenueType: 'Credit Line' },
+    { rank: 5, name: 'ABC Corp',             subscriptions: 2, revenue:  5580 },
+    { rank: 6, name: 'Thai Finance Group',   subscriptions: 1, revenue:  4990 },
+    { rank: 7, name: 'Northern Star Hotel',  subscriptions: 1, revenue:  4990 },
+    { rank: 8, name: 'XYZ Trading',          subscriptions: 1, revenue:  2970 },
   ],
 
   // ─── Analytics: Daily API Calls (last 7 days — F-A10.2) ───
@@ -406,13 +439,16 @@ window.MockData = {
 
   // ─── Analytics: Top Customers by API Calls (F-A10.2) ───
   topCustomers: [
+    { tenantName: 'FinTech Co., Ltd.',       apiCalls: 38500, source: 'devportal' },
     { tenantName: 'Thai Finance Group',      apiCalls: 12450 },
     { tenantName: 'ABC Corporation',         apiCalls:  9830 },
+    { tenantName: 'SmartBot Inc.',           apiCalls:  8900, source: 'devportal' },
     { tenantName: 'Smart Retail Co.',        apiCalls:  8240 },
     { tenantName: 'Digital Agency Thailand', apiCalls:  6780 },
     { tenantName: 'FutureTech Solutions',    apiCalls:  5920 },
     { tenantName: 'Bangkok Hospitality',     apiCalls:  4830 },
     { tenantName: 'Thai E-Commerce Hub',     apiCalls:  3960 },
+    { tenantName: 'DataDriven Ltd.',         apiCalls:  3400, source: 'devportal' },
     { tenantName: 'MediCare Thailand',       apiCalls:  3120 },
     { tenantName: 'EDU Platform Group',      apiCalls:  2480 },
     { tenantName: 'Logistics Pro Co.',       apiCalls:  1840 },
@@ -435,7 +471,175 @@ window.MockData = {
     totalTokensThisMonth: 1336100,
   },
 
+  // ─── Developer Portal — API Presets ───
+  apiPresets: [
+    {
+      id: 'AP-001', name: 'Customer Service Bundle', version: '2.1',
+      description: 'ระบบ AI ให้บริการลูกค้าอัตโนมัติ รองรับ Chat, Escalation และ Summary',
+      agents: [
+        { name: 'Chat Agent', model: 'GPT-4o', role: 'Main conversation handler' },
+        { name: 'Escalation Agent', model: 'Claude Sonnet', role: 'Handle complex issues' },
+        { name: 'Summary Agent', model: 'GPT-4o-mini', role: 'Summarize conversations' },
+      ],
+      assignedTenants: ['T-DP-001', 'T-DP-002'],
+      status: 'Active', lastUpdated: '2026-03-01', isDefault: false,
+    },
+    {
+      id: 'AP-002', name: 'Sales Assistant', version: '1.0',
+      description: 'AI ช่วยงานขาย ตอบคำถามสินค้า และคัดกรอง Lead อัตโนมัติ',
+      agents: [
+        { name: 'Sales Bot', model: 'GPT-4o', role: 'Product Q&A and recommendations' },
+        { name: 'Lead Qualifier', model: 'GPT-4o-mini', role: 'Score and qualify leads' },
+      ],
+      assignedTenants: ['T-DP-001'],
+      status: 'Active', lastUpdated: '2026-02-28', isDefault: false,
+    },
+    {
+      id: 'AP-003', name: 'RAG Engine', version: '3.2',
+      description: 'ค้นหาเอกสารด้วย AI แบบ Retrieval-Augmented Generation',
+      agents: [
+        { name: 'Document Search', model: 'Claude Sonnet', role: 'Search and retrieve documents' },
+      ],
+      assignedTenants: ['T-DP-002', 'T-DP-003'],
+      status: 'Active', lastUpdated: '2026-02-25', isDefault: true,
+    },
+    {
+      id: 'AP-004', name: 'Content Generator', version: '1.2',
+      description: 'สร้างเนื้อหาอัตโนมัติ — บทความ, โพสต์, สรุปรายงาน',
+      agents: [
+        { name: 'Writer Agent', model: 'Claude Sonnet', role: 'Generate long-form content' },
+        { name: 'Editor Agent', model: 'GPT-4o-mini', role: 'Proofread and refine text' },
+        { name: 'SEO Agent', model: 'GPT-4o-mini', role: 'Optimize for search engines' },
+      ],
+      assignedTenants: [],
+      status: 'Draft', lastUpdated: '2026-02-20', isDefault: false,
+    },
+    {
+      id: 'AP-005', name: 'Data Analyst', version: '2.0',
+      description: 'วิเคราะห์ข้อมูล สร้าง Insight และ Dashboard อัตโนมัติ',
+      agents: [
+        { name: 'Query Agent', model: 'GPT-4o', role: 'Generate and run SQL queries' },
+        { name: 'Insight Agent', model: 'Claude Sonnet', role: 'Analyze results and generate insights' },
+      ],
+      assignedTenants: ['T-DP-001', 'T-DP-003'],
+      status: 'Active', lastUpdated: '2026-03-02', isDefault: false,
+    },
+  ],
+
+  // ─── Developer Portal — Tenants ───
+  dpTenants: [
+    {
+      id: 'T-DP-001', name: 'FinTech Co., Ltd.', status: 'Active',
+      email: 'dev@fintechco.com', phone: '02-111-2233',
+      subscribedDate: '2025-11-15',
+      modifiedDate: '2026-02-20', modifiedBy: 'admin@realfact.ai',
+      assignedPresets: ['AP-001', 'AP-002', 'AP-005'],
+      apiCallsToday: 1250, apiCallsMonth: 38500,
+      creditLine: {
+        creditLimit: 100000, usedAmount: 42800, availableCredit: 57200,
+        billingCycle: 30, paymentTerms: 'Net 30', status: 'Active',
+        approvedDate: '2025-11-20', approvedBy: 'Finance Admin',
+      },
+      invoices: [
+        { id: 'INV-DEV-202602-001', amount: 38500, status: 'Paid', date: '2026-02-28' },
+        { id: 'INV-DEV-202601-001', amount: 31200, status: 'Paid', date: '2026-01-31' },
+      ],
+    },
+    {
+      id: 'T-DP-002', name: 'DataDriven Ltd.', status: 'Active',
+      email: 'admin@datadriven.io', phone: '02-333-4455',
+      subscribedDate: '2026-01-10',
+      modifiedDate: '2026-02-25', modifiedBy: 'finance@realfact.ai',
+      assignedPresets: ['AP-001', 'AP-003'],
+      apiCallsToday: 420, apiCallsMonth: 12800,
+      creditLine: {
+        creditLimit: 50000, usedAmount: 18500, availableCredit: 31500,
+        billingCycle: 30, paymentTerms: 'Net 30', status: 'Active',
+        approvedDate: '2026-01-15', approvedBy: 'Finance Admin',
+      },
+      invoices: [
+        { id: 'INV-DEV-202602-002', amount: 15200, status: 'Paid', date: '2026-02-28' },
+      ],
+    },
+    {
+      id: 'T-DP-003', name: 'SmartBot Inc.', status: 'Active',
+      email: 'tech@smartbot.co.th', phone: '02-555-6677',
+      subscribedDate: '2026-02-01',
+      modifiedDate: '2026-03-01', modifiedBy: 'admin@realfact.ai',
+      assignedPresets: ['AP-003', 'AP-005'],
+      apiCallsToday: 680, apiCallsMonth: 8900,
+      creditLine: {
+        creditLimit: 30000, usedAmount: 24800, availableCredit: 5200,
+        billingCycle: 30, paymentTerms: 'Net 15', status: 'Active',
+        approvedDate: '2026-02-05', approvedBy: 'Finance Admin',
+      },
+      invoices: [],
+    },
+    {
+      id: 'T-DP-004', name: 'CloudNine Tech', status: 'Active',
+      email: 'api@cloudnine.dev', phone: '02-777-8899',
+      subscribedDate: '2025-12-01',
+      modifiedDate: null, modifiedBy: null,
+      assignedPresets: [],
+      apiCallsToday: 0, apiCallsMonth: 0,
+      creditLine: {
+        creditLimit: 80000, usedAmount: 0, availableCredit: 80000,
+        billingCycle: 60, paymentTerms: 'Net 60', status: 'Active',
+        approvedDate: '2025-12-10', approvedBy: 'Finance Admin',
+      },
+      invoices: [],
+    },
+  ],
+
+  // ─── Developer Portal — KPIs ───
+  dpStats: {
+    activeTenants: 4,
+    totalApiPresets: 5,
+    activeApiPresets: 4,
+    totalAgents: 11,
+    apiCallsToday: 2350,
+    apiCallsMonth: 60200,
+    totalCreditLimit: 260000,
+    totalCreditUsed: 86100,
+    totalCreditAvailable: 173900,
+    tenantsNearLimit: 1,
+  },
+
+  // ─── Billing Terms Config (Credit Line only) ───
+  billingTermsConfig: {
+    platformDefault: {
+      billingCycle: 30,
+      paymentTerms: 'Net 30',
+      autoGenerateInvoice: true,
+      hardBlockAtZero: true,
+      modifiedDate: '2026-01-01',
+      modifiedBy: 'super@realfact.ai',
+    },
+    contexts: {
+      devportal: {
+        label: 'Developer Portal',
+        icon: 'fa-code',
+        billingCycle: 30,
+        paymentTerms: 'Net 30',
+        useDefault: true,
+        modifiedDate: '2026-01-01',
+        modifiedBy: 'super@realfact.ai',
+      },
+    },
+  },
+
   // ─── Helpers ───
+  resolveBillingTerms(context) {
+    var cfg = this.billingTermsConfig;
+    var ctx = cfg.contexts[context];
+    if (ctx && !ctx.useDefault) {
+      return { billingCycle: ctx.billingCycle, paymentTerms: ctx.paymentTerms };
+    }
+    return { billingCycle: cfg.platformDefault.billingCycle, paymentTerms: cfg.platformDefault.paymentTerms };
+  },
+  billingCyclesPaid(tenantId) {
+    return this.invoices.filter(function(i) { return i.tenantId === tenantId && i.status === 'Paid'; }).length;
+  },
   formatNumber(n) {
     if (n == null) return '-';
     return n.toLocaleString('th-TH');
@@ -452,6 +656,7 @@ window.MockData = {
       'Processing': 'chip-yellow', 'Issued': 'chip-yellow', 'Configured': 'chip-yellow',
       'Draft': 'chip-gray', 'Registered': 'chip-blue', 'Free': 'chip-gray',
       'Starter': 'chip-blue', 'Pro': 'chip-orange',
+      'Deprecated': 'chip-red',
       'Decommissioned': 'chip-red', 'Suspended': 'chip-red', 'Overdue': 'chip-red',
       'Offline': 'chip-red', 'Discontinued': 'chip-red', 'Retired': 'chip-red',
     };

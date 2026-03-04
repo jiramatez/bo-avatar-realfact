@@ -428,6 +428,7 @@ h3.heading { font-size: 20px; letter-spacing: 2px; font-weight: 400; }
 .chip-yellow { background: rgba(245,158,11,.15); color: var(--warning); }
 .chip-gray { background: rgba(156,163,175,.12); color: var(--text-muted); }
 .chip-blue { background: rgba(59,130,246,.15); color: #3b82f6; }
+.chip-purple { background: rgba(139,92,246,.15); color: #8b5cf6; }
 
 /* ─── STATUS BADGE ─── */
 .status-badge {

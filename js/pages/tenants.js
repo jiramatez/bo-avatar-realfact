@@ -6,7 +6,7 @@ window.Pages = window.Pages || {};
 window.Pages.tenants = {
 
   // ─── Sub-Platform color map ───
-  _spColors: { avatar: '#f15b26', booking: '#3b82f6' },
+  _spColors: { avatar: '#f15b26', booking: '#3b82f6', devportal: '#8b5cf6' },
 
   // ─── Subscription chips for table row ───
   _subChips(tenantId) {
@@ -28,6 +28,14 @@ window.Pages.tenants = {
     return `<div style="flex-direction:column;gap:5px;">${chips.join('')}</div>`;
   },
 
+  // ─── Developer Portal chip ───
+  _dpChip() {
+    return `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;border:1px solid #8b5cf650;background:#8b5cf615;font-size:11px;font-weight:600;color:#8b5cf6;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#8b5cf6;flex-shrink:0;"></span>
+      Developer Portal&nbsp;(Credit Line)
+    </span>`;
+  },
+
   // ─── Monthly revenue from active subscriptions ───
   _monthlyRevenue(tenantId) {
     const d = window.MockData;
@@ -40,11 +48,37 @@ window.Pages.tenants = {
   _actionBtns(tenantId) {
     const d       = window.MockData;
     const pending = ((d.tenantSubscriptions || {})[tenantId] || []).filter(s => s.status === 'Pending');
-    let html = `<button class="btn btn-sm btn-outline tenant-detail-btn" data-id="${tenantId}" title="ดูรายละเอียด"><i class="fa-solid fa-eye"></i></button>`;
+    let html = `<button class="btn btn-sm btn-outline tenant-detail-btn" data-id="${tenantId}" data-source="platform" title="ดูรายละเอียด"><i class="fa-solid fa-eye"></i></button>`;
     if (pending.length > 0) {
       html += `<a href="#billing-verify" class="btn btn-sm btn-warning" title="รอตรวจสอบ payment ${pending.length} รายการ" style="font-size:11px;"><i class="fa-solid fa-receipt"></i> Verify</a>`;
     }
     return `<div class="flex gap-4 justify-end">${html}</div>`;
+  },
+
+  // ─── DP action buttons (view only) ───
+  _dpActionBtns(tenantId) {
+    return `<div class="flex gap-4 justify-end">
+      <button class="btn btn-sm btn-outline tenant-detail-btn" data-id="${tenantId}" data-source="devportal" title="ดูรายละเอียด"><i class="fa-solid fa-eye"></i></button>
+    </div>`;
+  },
+
+  // ─── Merge platform tenants + DP tenants into unified array ───
+  _mergedTenants() {
+    const d = window.MockData;
+    const platform = (d.tenants || []).map(t => ({
+      id: t.id, name: t.name, email: t.email, phone: t.phone,
+      status: t.status, regDate: t.regDate, modifiedDate: t.modifiedDate,
+      modifiedBy: t.modifiedBy, tokenBalance: t.tokenBalance,
+      source: 'platform',
+    }));
+    const dp = (d.dpTenants || []).map(t => ({
+      id: t.id, name: t.name, email: t.email || '—', phone: t.phone || '—',
+      status: t.status, regDate: t.subscribedDate, modifiedDate: null,
+      modifiedBy: null, creditUsed: t.creditLine ? t.creditLine.usedAmount : 0,
+      creditLimit: t.creditLine ? t.creditLine.creditLimit : 0,
+      source: 'devportal',
+    }));
+    return platform.concat(dp);
   },
 
   _rerender() {
@@ -58,11 +92,14 @@ window.Pages.tenants = {
     const d    = window.MockData;
     const s    = d.stats;
     const self = window.Pages.tenants;
+    const dpTenants = d.dpTenants || [];
+    const merged    = self._mergedTenants();
 
     // Aggregate subscription stats
     const allSubs        = Object.values(d.tenantSubscriptions || {}).flat();
     const pendingCount   = (d.invoices || []).filter(i => i.status === 'Pending Verification').length;
     const activeSubsCnt  = allSubs.filter(s => s.status === 'Active').length;
+    const totalCount     = s.totalTenants + dpTenants.length;
 
     return `
       <!-- Page Header -->
@@ -83,7 +120,7 @@ window.Pages.tenants = {
             <span class="stat-label">Total Tenants</span>
             <div class="stat-icon blue"><i class="fa-solid fa-building-user"></i></div>
           </div>
-          <div class="stat-value mono">${d.formatNumber(s.totalTenants)}</div>
+          <div class="stat-value mono">${d.formatNumber(totalCount)}</div>
           <div class="stat-change up"><i class="fa-solid fa-arrow-up"></i> +3 เดือนนี้</div>
         </div>
         <div class="stat-card" style="${pendingCount > 0 ? 'border:1.5px solid var(--warning);cursor:pointer;' : ''}" onclick="${pendingCount > 0 ? "location.hash='billing-verify'" : ''}">
@@ -119,6 +156,7 @@ window.Pages.tenants = {
             <option value="">All Sub-Platforms</option>
             <option value="avatar">Avatar</option>
             <option value="booking">AI Booking</option>
+            <option value="devportal">Developer Portal</option>
           </select>
         </div>
         <div class="form-group" style="margin:0;min-width:150px;">
@@ -142,7 +180,7 @@ window.Pages.tenants = {
             <tr>
               <th>TENANT</th>
               <th>SUBSCRIPTIONS</th>
-              <th>TOKEN BALANCE</th>
+              <th>TOKEN / CREDIT</th>
               <th>MONTHLY REVENUE</th>
               <th>JOINED</th>
               <th>แก้ไขล่าสุด</th>
@@ -155,6 +193,7 @@ window.Pages.tenants = {
               const rev  = self._monthlyRevenue(t.id);
               return `
               <tr data-tenant-id="${t.id}"
+                  data-source="platform"
                   data-status="${t.status.toLowerCase()}"
                   data-subs="${subs.map(s => s.subPlatformCode).join(',')}"
                   data-name="${t.name.toLowerCase()}"
@@ -164,7 +203,7 @@ window.Pages.tenants = {
                   <div class="flex items-center gap-12">
                     <div class="user-avatar" style="width:36px;height:36px;font-size:14px;flex-shrink:0;">${t.name.charAt(0).toUpperCase()}</div>
                     <div>
-                      <a href="#" class="tenant-name-link font-600 text-primary" data-id="${t.id}">${t.name}</a>
+                      <a href="#" class="tenant-name-link font-600 text-primary" data-id="${t.id}" data-source="platform">${t.name}</a>
                       <div class="text-xs text-muted">${t.email}</div>
                     </div>
                   </div>
@@ -183,9 +222,42 @@ window.Pages.tenants = {
                 <td>${self._actionBtns(t.id)}</td>
               </tr>`;
             }).join('')}
+            ${dpTenants.map(t => {
+              const cl = t.creditLine || {};
+              return `
+              <tr data-tenant-id="${t.id}"
+                  data-source="devportal"
+                  data-status="${t.status.toLowerCase()}"
+                  data-subs="devportal"
+                  data-name="${t.name.toLowerCase()}"
+                  data-email="${(t.email || '').toLowerCase()}"
+                  data-haspending="0">
+                <td>
+                  <div class="flex items-center gap-12">
+                    <div class="user-avatar" style="width:36px;height:36px;font-size:14px;flex-shrink:0;background:#8b5cf6;">${t.name.charAt(0).toUpperCase()}</div>
+                    <div>
+                      <a href="#" class="tenant-name-link font-600" style="color:#8b5cf6;" data-id="${t.id}" data-source="devportal">${t.name}</a>
+                      <div class="text-xs text-muted">${t.email || '—'}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>${self._dpChip()}</td>
+                <td>
+                  <span class="mono font-600" style="color:#8b5cf6;">${d.formatCurrency(cl.availableCredit || 0)}</span>
+                  <span class="text-xs text-muted"> credit</span>
+                </td>
+                <td>
+                  <span class="mono font-600">${d.formatCurrency(cl.usedAmount || 0)}</span>
+                  <span class="text-xs text-muted"> used</span>
+                </td>
+                <td class="text-sm text-muted mono">${t.subscribedDate}</td>
+                <td style="white-space:nowrap;"><div class="mono text-sm text-muted">—</div></td>
+                <td>${self._dpActionBtns(t.id)}</td>
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>
-        <div class="text-sm text-muted p-16">Showing ${d.tenants.length} of ${d.formatNumber(s.totalTenants)} tenants</div>
+        <div class="text-sm text-muted p-16">Showing ${merged.length} of ${d.formatNumber(totalCount)} tenants</div>
       </div>
     `;
   },
@@ -230,16 +302,28 @@ window.Pages.tenants = {
 
     // ─── Tenant Detail (table link + eye button) ───
     document.querySelectorAll('.tenant-name-link, .tenant-detail-btn').forEach(el => {
-      el.addEventListener('click', e => { e.preventDefault(); self._showModal(el.dataset.id); });
+      el.addEventListener('click', e => {
+        e.preventDefault();
+        const source = el.dataset.source;
+        if (source === 'devportal') {
+          self._showDpModal(el.dataset.id);
+        } else {
+          self._showModal(el.dataset.id);
+        }
+      });
     });
 
     // ─── Export CSV ───
     document.getElementById('btn-export-tenants')?.addEventListener('click', () => {
       const rows = [
-        ['ID', 'Name', 'Email', 'Subscriptions', 'Token Balance', 'Monthly Revenue (THB)', 'Status', 'Joined'],
+        ['ID', 'Name', 'Email', 'Source', 'Subscriptions / Type', 'Token Balance / Credit Used', 'Monthly Revenue (THB)', 'Status', 'Joined'],
         ...d.tenants.map(t => {
           const subs = ((d.tenantSubscriptions || {})[t.id] || []).map(s => `${s.label}:${s.plan}:${s.status}`).join('|');
-          return [t.id, `"${t.name}"`, t.email, `"${subs}"`, t.tokenBalance, self._monthlyRevenue(t.id), t.status, t.regDate];
+          return [t.id, `"${t.name}"`, t.email, 'Platform', `"${subs}"`, t.tokenBalance, self._monthlyRevenue(t.id), t.status, t.regDate];
+        }),
+        ...(d.dpTenants || []).map(t => {
+          const cl = t.creditLine || {};
+          return [t.id, `"${t.name}"`, t.email || '', 'Developer Portal', '"Credit Line"', cl.usedAmount || 0, cl.usedAmount || 0, t.status, t.subscribedDate];
         }),
       ];
       const csv  = rows.map(r => r.join(',')).join('\n');
@@ -438,5 +522,154 @@ window.Pages.tenants = {
       App.closeModal();
       window.Pages.tenants._rerender();
     });
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // Developer Portal Tenant Modal
+  // ═══════════════════════════════════════════════════════════
+  _showDpModal(tenantId) {
+    const d = window.MockData;
+    const t = (d.dpTenants || []).find(x => x.id === tenantId);
+    if (!t) return;
+
+    const cl = t.creditLine || {};
+    const presets = (d.apiPresets || []).filter(p => (t.assignedPresets || []).includes(p.id));
+    const usedPct  = cl.creditLimit ? Math.min(100, Math.round(cl.usedAmount / cl.creditLimit * 100)) : 0;
+    const barColor = usedPct > 80 ? 'var(--error)' : usedPct > 50 ? 'var(--warning)' : 'var(--success)';
+
+    const presetRows = presets.map(p => `
+      <div class="flex items-center gap-12 p-12 mb-8" style="background:var(--surface2);border-radius:8px;border-left:3px solid #8b5cf6;">
+        <div style="width:36px;height:36px;border-radius:8px;background:#8b5cf6;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;flex-shrink:0;">
+          <i class="fa-solid fa-cube"></i>
+        </div>
+        <div class="flex-1">
+          <div class="font-600">${p.name} <span class="text-muted text-xs">v${p.version}</span></div>
+          <div class="text-xs text-muted">${p.agents.length} agent(s)</div>
+        </div>
+        ${d.statusChip(p.status)}
+      </div>
+    `).join('');
+
+    const invoiceRows = (t.invoices || []).map(inv => `
+      <tr>
+        <td class="mono text-sm">${inv.id}</td>
+        <td class="mono text-sm">${inv.date}</td>
+        <td class="mono font-600">${d.formatCurrency(inv.amount)}</td>
+        <td>${d.statusChip(inv.status)}</td>
+      </tr>
+    `).join('');
+
+    window.App.showModal(`
+      <div class="modal modal-wide">
+        <button class="modal-close" onclick="App.closeModal()"><i class="fa-solid fa-xmark"></i></button>
+
+        <!-- Header -->
+        <div class="flex items-center gap-16 mb-20">
+          <div class="user-avatar" style="width:52px;height:52px;font-size:20px;flex-shrink:0;background:#8b5cf6;">${t.name.charAt(0).toUpperCase()}</div>
+          <div>
+            <div class="modal-title">${t.name}</div>
+            <div class="text-sm text-muted">${t.email || '—'}</div>
+          </div>
+          <div class="flex-1"></div>
+          <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;border:1px solid #8b5cf650;background:#8b5cf615;font-size:11px;font-weight:600;color:#8b5cf6;">
+            <i class="fa-solid fa-code"></i> Developer Portal
+          </span>
+          ${d.statusChip(t.status)}
+          <span class="mono text-xs text-muted">${t.id}</span>
+        </div>
+
+        <!-- Contact Strip -->
+        <div class="flex gap-24 p-16 mb-16" style="background:var(--surface2);border-radius:10px;flex-wrap:wrap;">
+          <div><div class="text-xs text-muted uppercase">Company</div><div class="font-600 text-sm mt-2">${t.name}</div></div>
+          <div><div class="text-xs text-muted uppercase">Email</div><div class="font-600 text-sm mt-2">${t.email || '—'}</div></div>
+          <div><div class="text-xs text-muted uppercase">Phone</div><div class="font-600 text-sm mt-2 mono">${t.phone || '—'}</div></div>
+          <div><div class="text-xs text-muted uppercase">Subscribed</div><div class="font-600 text-sm mt-2 mono">${t.subscribedDate}</div></div>
+        </div>
+
+        <!-- Credit Line -->
+        <div class="card p-16 mb-16" style="border-left:3px solid #8b5cf6;">
+          <div class="flex items-center gap-8 mb-12">
+            <i class="fa-solid fa-handshake-angle" style="color:#8b5cf6"></i>
+            <span class="font-700 text-sm uppercase">Credit Line</span>
+            <span style="margin-left:auto;">${
+              cl.status === 'Active'
+                ? '<span class="chip chip-green">Active</span>'
+                : '<span class="chip chip-red">Suspended</span>'
+            }</span>
+          </div>
+          <div class="grid-3 gap-16 mb-10">
+            <div>
+              <div class="text-xs text-muted uppercase mb-4">วงเงินสูงสุด</div>
+              <div class="mono font-700" style="font-size:22px;">${d.formatCurrency(cl.creditLimit)}</div>
+            </div>
+            <div>
+              <div class="text-xs text-muted uppercase mb-4">ใช้ไปแล้ว</div>
+              <div class="mono font-700 text-warning" style="font-size:22px;">${d.formatCurrency(cl.usedAmount)}</div>
+            </div>
+            <div>
+              <div class="text-xs text-muted uppercase mb-4">คงเหลือ</div>
+              <div class="mono font-700 ${cl.availableCredit === 0 ? 'text-error' : 'text-success'}" style="font-size:22px;">${d.formatCurrency(cl.availableCredit)}</div>
+            </div>
+          </div>
+          <div class="progress-bar mb-8">
+            <div class="progress-fill" style="width:${usedPct}%;background:${barColor};"></div>
+          </div>
+          <div class="flex gap-20 text-xs text-muted">
+            <span>รอบบิล: <strong>${cl.billingCycle} วัน</strong></span>
+            <span>เงื่อนไข: <strong>${cl.paymentTerms}</strong></span>
+            <span>อนุมัติเมื่อ: <strong class="mono">${cl.approvedDate}</strong></span>
+          </div>
+        </div>
+
+        <!-- API Usage -->
+        <div class="card p-16 mb-16">
+          <div class="flex items-center gap-8 mb-12">
+            <i class="fa-solid fa-chart-bar" style="color:#8b5cf6;"></i>
+            <span class="font-700 text-sm uppercase">API Usage</span>
+          </div>
+          <div class="grid-2 gap-16">
+            <div>
+              <div class="text-xs text-muted uppercase mb-4">API Calls Today</div>
+              <div class="mono font-700" style="font-size:22px;">${d.formatNumber(t.apiCallsToday)}</div>
+            </div>
+            <div>
+              <div class="text-xs text-muted uppercase mb-4">API Calls This Month</div>
+              <div class="mono font-700" style="font-size:22px;">${d.formatNumber(t.apiCallsMonth)}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assigned Presets -->
+        <div class="card p-16 mb-16">
+          <div class="flex items-center gap-8 mb-12">
+            <i class="fa-solid fa-cubes" style="color:#8b5cf6;"></i>
+            <span class="font-700 text-sm uppercase">Assigned API Presets (${presets.length})</span>
+          </div>
+          ${presets.length === 0 ? '<div class="text-sm text-muted">ไม่มี Preset ที่ assign</div>' : presetRows}
+        </div>
+
+        <!-- Invoices -->
+        <div class="card p-16 mb-16">
+          <div class="flex items-center gap-8 mb-12">
+            <i class="fa-solid fa-file-invoice text-muted"></i>
+            <span class="font-700 text-sm uppercase">Invoices</span>
+          </div>
+          ${(t.invoices || []).length === 0 ? '<div class="text-sm text-muted">ไม่มี Invoice</div>' : `
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Invoice ID</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody>${invoiceRows}</tbody>
+            </table>
+          </div>`}
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-actions">
+          <button class="btn btn-outline btn-sm" onclick="location.hash='dp-tenants';App.closeModal()">
+            <i class="fa-solid fa-code"></i> ไปที่ DP Tenants
+          </button>
+        </div>
+      </div>
+    `);
   },
 };

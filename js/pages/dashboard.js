@@ -22,6 +22,17 @@ window.Pages.dashboard = {
 
     const activeSPs = d.subPlatforms.filter(sp => sp.status === 'Active').length;
 
+    // Developer Portal stats
+    const dpS = d.dpStats;
+    const dpCreditPct = dpS.totalCreditLimit ? Math.round(dpS.totalCreditUsed / dpS.totalCreditLimit * 100) : 0;
+
+    // Combined revenue (paid invoices from all sources)
+    const totalPaidRevenue = d.invoices.filter(i => i.status === 'Paid').reduce((sum, i) => sum + i.total, 0);
+
+    // Combined tenant count
+    const totalTenantsAll = s.totalTenants + dpS.activeTenants;
+    const activeTenantsAll = s.activeTenants + dpS.activeTenants;
+
     return `
       <!-- Page Header -->
       <div class="page-header">
@@ -47,15 +58,15 @@ window.Pages.dashboard = {
             <span class="stat-label">Tenant ทั้งหมด</span>
             <div class="stat-icon green"><i class="fa-solid fa-building"></i></div>
           </div>
-          <div class="stat-value mono">${d.formatNumber(s.totalTenants)}</div>
-          <div class="stat-change up">${s.activeTenants} Active · ${s.suspendedTenants} Suspended</div>
+          <div class="stat-value mono">${d.formatNumber(totalTenantsAll)}</div>
+          <div class="stat-change up">${activeTenantsAll} Active · ${s.suspendedTenants} Suspended</div>
         </div>
         <div class="stat-card">
           <div class="stat-header">
             <span class="stat-label">รายได้รายเดือน</span>
             <div class="stat-icon orange"><i class="fa-solid fa-baht-sign"></i></div>
           </div>
-          <div class="stat-value mono">${d.formatCurrency(s.monthlyRevenue)}</div>
+          <div class="stat-value mono">${d.formatCurrency(totalPaidRevenue)}</div>
           <div class="stat-change up"><i class="fa-solid fa-arrow-up"></i> +12% จากเดือนที่แล้ว</div>
         </div>
         <div class="stat-card">
@@ -108,6 +119,48 @@ window.Pages.dashboard = {
             </div>
           </div>
         `).join('')}
+      </div>
+
+      <!-- Developer Portal Overview -->
+      <div class="section-title"><i class="fa-solid fa-code text-primary"></i> Developer Portal</div>
+      <div class="card p-20 mb-24">
+        <div class="flex justify-between items-start mb-16">
+          <div>
+            <div class="font-700" style="font-size:15px;">Developer Portal — API Management</div>
+            <div class="text-sm text-muted mt-2">Credit Line · API Presets · Assign Endpoint</div>
+          </div>
+          <span class="chip chip-green">Active</span>
+        </div>
+        <div class="grid-4 gap-16 mb-12">
+          <div>
+            <div class="text-xs text-muted uppercase mb-2">Active Tenants</div>
+            <div class="mono font-700">${dpS.activeTenants}</div>
+          </div>
+          <div>
+            <div class="text-xs text-muted uppercase mb-2">API Presets</div>
+            <div class="mono font-700">${dpS.activeApiPresets}<span class="text-muted font-400"> / ${dpS.totalApiPresets}</span></div>
+          </div>
+          <div>
+            <div class="text-xs text-muted uppercase mb-2">API Calls/Month</div>
+            <div class="mono font-700">${d.formatNumber(dpS.apiCallsMonth)}</div>
+          </div>
+          <div>
+            <div class="text-xs text-muted uppercase mb-2">Credit Usage</div>
+            <div class="mono font-700" style="color:${dpCreditPct > 80 ? 'var(--error)' : dpCreditPct > 50 ? 'var(--warning)' : 'var(--success)'};">${dpCreditPct}%</div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-8">
+            <div style="flex:1;max-width:200px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+              <div style="height:100%;width:${dpCreditPct}%;background:${dpCreditPct > 80 ? 'var(--error)' : dpCreditPct > 50 ? 'var(--warning)' : 'var(--success)'};border-radius:3px;"></div>
+            </div>
+            <span class="text-xs text-muted">${d.formatCurrency(dpS.totalCreditUsed)} / ${d.formatCurrency(dpS.totalCreditLimit)}</span>
+            ${dpS.tenantsNearLimit > 0 ? '<span class="chip chip-red" style="font-size:10px;">' + dpS.tenantsNearLimit + ' Tenant ใกล้เต็มวงเงิน</span>' : ''}
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="location.hash='dp-dashboard'">
+            <i class="fa-solid fa-arrow-right"></i> จัดการ
+          </button>
+        </div>
       </div>
 
       <!-- Plan Distribution -->
@@ -219,7 +272,7 @@ window.Pages.dashboard = {
 
       <!-- Quick Navigation -->
       <div class="section-title"><i class="fa-solid fa-bolt text-muted"></i> ลัดไปยัง</div>
-      <div class="flex gap-12">
+      <div class="flex gap-12" style="flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="location.hash='sub-platforms'">
           <i class="fa-solid fa-layer-group"></i> Sub-Platforms
         </button>
@@ -231,6 +284,9 @@ window.Pages.dashboard = {
         </button>
         <button class="btn btn-outline" onclick="location.hash='cost-pricing'">
           <i class="fa-solid fa-calculator"></i> Cost & Pricing
+        </button>
+        <button class="btn btn-outline" onclick="location.hash='dp-dashboard'" style="border-color:#8b5cf6;color:#8b5cf6;">
+          <i class="fa-solid fa-code"></i> Developer Portal
         </button>
       </div>
     `;

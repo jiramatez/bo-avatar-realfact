@@ -183,6 +183,30 @@
             <span class="nav-label">Knowledge Base</span>
           </a>
         </div>
+
+        <!-- ══ DEVELOPER PORTAL — API Management ══ -->
+        <div class="nav-group" data-context="devportal">
+          <div class="nav-section">
+            <i class="fa-solid fa-code nav-section-icon"></i>
+            <span class="nav-section-label">DEVELOPER PORTAL</span>
+          </div>
+          <a href="#dp-dashboard" class="nav-item" data-page="dp-dashboard">
+            <i class="fa-solid fa-chart-line"></i>
+            <span class="nav-label">Dashboard</span>
+          </a>
+          <a href="#dp-tenants" class="nav-item" data-page="dp-tenants">
+            <i class="fa-solid fa-building-user"></i>
+            <span class="nav-label">Tenants</span>
+          </a>
+          <a href="#dp-api-presets" class="nav-item" data-page="dp-api-presets">
+            <i class="fa-solid fa-puzzle-piece"></i>
+            <span class="nav-label">API Presets</span>
+          </a>
+          <a href="#dp-assign-endpoint" class="nav-item" data-page="dp-assign-endpoint">
+            <i class="fa-solid fa-link"></i>
+            <span class="nav-label">Assign Endpoint</span>
+          </a>
+        </div>
       </div>
 
       <div class="sidebar-footer">
@@ -224,6 +248,14 @@
                 <div class="ctx-dropdown-info">
                   <span class="ctx-dropdown-name">RealFact Avatar</span>
                   <span class="ctx-dropdown-desc">Hardware · Devices · Assign Avatar · KB · Defaults</span>
+                </div>
+                <i class="fa-solid fa-check ctx-dropdown-check"></i>
+              </div>
+              <div class="ctx-dropdown-item" data-ctx="devportal">
+                <div class="ctx-dropdown-icon" style="background:var(--surface-2);"><i class="fa-solid fa-code"></i></div>
+                <div class="ctx-dropdown-info">
+                  <span class="ctx-dropdown-name">Developer Portal</span>
+                  <span class="ctx-dropdown-desc">API Presets · Assign Endpoint · Tenants · Credit Line</span>
                 </div>
                 <i class="fa-solid fa-check ctx-dropdown-check"></i>
               </div>
@@ -271,6 +303,10 @@
   <script src="js/pages/plans-packages.js"></script>
   <script src="js/pages/payment-settings.js"></script>
   <script src="js/pages/dashboard-analytics.js"></script>
+  <script src="js/pages/devportal-dashboard.js"></script>
+  <script src="js/pages/devportal-tenants.js"></script>
+  <script src="js/pages/devportal-api-presets.js"></script>
+  <script src="js/pages/devportal-assign-endpoint.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

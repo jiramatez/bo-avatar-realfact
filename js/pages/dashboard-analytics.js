@@ -141,7 +141,7 @@
       c1.render(); this._ch.push(c1);
 
       // Chart 2: By Sub-Platform — donut
-      var spClr = sp.map(function(x){return x.code==='avatar'?'#f15b26':'#3b82f6';});
+      var spClr = sp.map(function(x){return x.code==='avatar'?'#f15b26':x.code==='devportal'?'#8b5cf6':'#3b82f6';});
       var c2 = new ApexCharts(document.getElementById('ch-sp-donut'), {
         chart: Object.assign(_base(m), {type:'donut', height:180}),
         theme:{mode:m},
@@ -170,13 +170,14 @@
         chart: Object.assign(_base(m), {type:'bar', height:220}),
         theme:{mode:m}, grid:_grid(m), dataLabels:{enabled:false},
         series:[
-          {name:'avatar',  data:bySP.map(function(r){return r.avatar;})},
-          {name:'booking', data:bySP.map(function(r){return r.booking;})},
+          {name:'Avatar',          data:bySP.map(function(r){return r.avatar;})},
+          {name:'AI Booking',      data:bySP.map(function(r){return r.booking;})},
+          {name:'Developer Portal',data:bySP.map(function(r){return r.devportal||0;})},
         ],
         xaxis:{categories:bySP.map(function(r){return r.month;}), labels:{style:{fontSize:'11px'}}},
         yaxis:{labels:{formatter:function(v){return (v/1000).toFixed(0)+'k';}, style:{fontSize:'11px'}}},
         plotOptions:{bar:{columnWidth:'60%', borderRadius:2}},
-        colors:['#f15b26','#3b82f6'],
+        colors:['#f15b26','#3b82f6','#8b5cf6'],
         legend:{position:'top', horizontalAlign:'right', fontSize:'12px'},
         tooltip:{theme:m, y:{formatter:function(v){return _thb(v);}}},
       });
@@ -221,7 +222,7 @@
 
       // Section 6: Top Tenants by Spend
       var tops  = d.topTenantsBySpend || [];
-      var rkClr = ['#f59e0b','#9ca3af','#b45309','#6b7280','#6b7280'];
+      var rkClr = ['#f59e0b','#9ca3af','#b45309','#6b7280','#6b7280','#6b7280','#6b7280','#6b7280'];
       var tpEl  = document.getElementById('sec-top-tenants');
       if (tpEl) {
         tpEl.innerHTML =
@@ -230,10 +231,13 @@
             '<a href="#tenants" onclick="App.navigate(\'tenants\')" class="text-xs" style="color:var(--primary);text-decoration:none;cursor:pointer;">View All ↗</a>' +
           '</div>' +
           tops.map(function(t, i) {
+            var isDp = t.source === 'devportal';
+            var dpBadge = isDp ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:10px;background:#8b5cf615;border:1px solid #8b5cf640;font-size:9px;font-weight:700;color:#8b5cf6;margin-left:6px;"><i class="fa-solid fa-code" style="font-size:8px;"></i> DP</span>' : '';
+            var subLabel = isDp ? t.subscriptions : t.subscriptions + ' subscription(s)';
             return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">' +
-              '<div style="width:28px;height:28px;border-radius:50%;background:' + (rkClr[i]||'var(--border)') + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">' + t.rank + '</div>' +
-              '<div style="flex:1;min-width:0;"><div class="font-600" style="font-size:14px;">' + t.name + '</div>' +
-              '<div class="text-muted" style="font-size:11px;">' + t.subscriptions + ' subscription(s)</div></div>' +
+              '<div style="width:28px;height:28px;border-radius:50%;background:' + (isDp ? '#8b5cf6' : (rkClr[i]||'var(--border)')) + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">' + t.rank + '</div>' +
+              '<div style="flex:1;min-width:0;"><div class="font-600" style="font-size:14px;">' + t.name + dpBadge + '</div>' +
+              '<div class="text-muted" style="font-size:11px;">' + subLabel + '</div></div>' +
               '<div class="mono font-600" style="font-size:13px;white-space:nowrap;">' + _fmt(t.revenue,0) + ' <span class="text-muted" style="font-size:11px;font-weight:400;">THB/mo</span></div>' +
             '</div>';
           }).join('');
@@ -361,7 +365,7 @@
       _kill(this._ch);
       _set('cust-ts', 'Updated: ' + _now());
 
-      var tenants = d.tenants || [], cats = d.serviceCategories || [];
+      var tenants = (d.tenants || []).concat(d.dpTenants || []), cats = d.serviceCategories || [];
       var activeT  = tenants.filter(function(t){return t.status==='Active';}).length;
       var totalSvc = cats.reduce(function(s,c){return s+c.count;},0);
       _set('kpi-total-t',    tenants.length.toLocaleString('th-TH'));

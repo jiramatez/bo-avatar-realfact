@@ -115,6 +115,7 @@ window.Pages.billing = {
               <option value="">ประเภททั้งหมด</option>
               <option value="Subscription">Subscription</option>
               <option value="Token Top-up">Token Top-up</option>
+              <option value="Credit Line">Credit Line</option>
             </select>
           </div>
           <div class="form-group" style="margin:0;min-width:190px;">
@@ -136,15 +137,22 @@ window.Pages.billing = {
             <thead>
               <tr>
                 <th>เลขที่ใบแจ้งหนี้</th><th>TENANT</th><th>ประเภท</th><th>รายละเอียด</th>
-                <th>จำนวนเงิน</th><th>VAT</th><th>รวมทั้งสิ้น</th><th>สถานะ</th><th>วันครบกำหนด</th><th>ช่องทาง</th>
+                <th>จำนวนเงิน</th><th>VAT</th><th>รวมทั้งสิ้น</th><th>สถานะ</th><th>วันครบกำหนด</th><th>ช่องทาง</th><th>รอบที่ชำระ</th>
               </tr>
             </thead>
             <tbody id="inv-table-body">
-              ${invoices.map(inv => `
+              ${invoices.map(inv => {
+                const typeChip = inv.type === 'Token Top-up'
+                  ? '<span class="chip chip-orange">Token Top-up</span>'
+                  : inv.type === 'Credit Line'
+                    ? '<span class="chip chip-purple">Credit Line</span>'
+                    : '<span class="chip chip-blue">Subscription</span>';
+                const cycles = d.billingCyclesPaid(inv.tenantId);
+                return `
                 <tr data-platform="${inv.subPlatform || ''}" data-type="${inv.type}" data-status="${inv.status}" data-search="${inv.id.toLowerCase()} ${inv.tenantName.toLowerCase()}">
                   <td class="mono text-sm">${inv.id}</td>
-                  <td class="font-600">${inv.tenantName}</td>
-                  <td>${inv.type === 'Token Top-up' ? '<span class="chip chip-orange">Token Top-up</span>' : '<span class="chip chip-blue">Subscription</span>'}</td>
+                  <td class="font-600">${inv.tenantName}<br><span class="text-xs text-muted">${inv.subPlatform || '-'}</span></td>
+                  <td>${typeChip}</td>
                   <td class="text-sm">${inv.description}</td>
                   <td class="mono">${d.formatCurrency(inv.amount)}</td>
                   <td class="mono text-sm">${d.formatCurrency(inv.vat)}</td>
@@ -152,7 +160,9 @@ window.Pages.billing = {
                   <td>${d.statusChip(inv.status)}</td>
                   <td class="text-sm text-muted">${inv.dueDate}</td>
                   <td class="text-sm">${inv.method || '-'}</td>
-                </tr>`).join('')}
+                  <td class="mono text-center">${cycles > 0 ? '<span class="chip chip-green">' + cycles + ' รอบ</span>' : '<span class="text-muted">—</span>'}</td>
+                </tr>`;
+              }).join('')}
             </tbody>
           </table>
         </div>
@@ -263,12 +273,12 @@ window.Pages.billing = {
 
     // Invoice Export CSV
     document.getElementById('inv-export-csv')?.addEventListener('click', () => {
-      const headers = ['เลขที่ใบแจ้งหนี้','Tenant','Sub-Platform','ประเภท','รายละเอียด','จำนวนเงิน','VAT','รวมทั้งสิ้น','สถานะ','วันครบกำหนด','ช่องทาง'];
+      const headers = ['เลขที่ใบแจ้งหนี้','Tenant','Sub-Platform','ประเภท','รายละเอียด','จำนวนเงิน','VAT','รวมทั้งสิ้น','สถานะ','วันครบกำหนด','ช่องทาง','รอบที่ชำระ'];
       const visible = [...document.querySelectorAll('#inv-table-body tr')].filter(r => r.style.display !== 'none');
       const ids     = visible.map(r => r.querySelector('td.mono')?.textContent.trim());
       const rows    = d.invoices.filter(i => ids.includes(i.id));
       const csv = [headers, ...rows.map(i => [
-        i.id, i.tenantName, i.subPlatform || '-', i.type, i.description, i.amount, i.vat, i.total, i.status, i.dueDate, i.method || '-',
+        i.id, i.tenantName, i.subPlatform || '-', i.type, i.description, i.amount, i.vat, i.total, i.status, i.dueDate, i.method || '-', d.billingCyclesPaid(i.tenantId),
       ])].map(r => r.map(v => _billingCsvCell(v)).join(',')).join('\n');
       const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
       const url  = URL.createObjectURL(blob);
@@ -284,7 +294,7 @@ window.Pages.billing = {
       const rows    = d.invoices.filter(i => ids.includes(i.id)).map(i =>
         `<tr><td>${i.id}</td><td>${i.tenantName}</td><td>${i.subPlatform || '-'}</td><td>${i.type}</td>
          <td>${i.description}</td><td>${i.total.toLocaleString('th-TH',{minimumFractionDigits:2})} THB</td>
-         <td>${i.status}</td><td>${i.dueDate}</td><td>${i.method || '-'}</td></tr>`
+         <td>${i.status}</td><td>${i.dueDate}</td><td>${i.method || '-'}</td><td>${d.billingCyclesPaid(i.tenantId)}</td></tr>`
       ).join('');
       const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoices</title>
         <style>body{font-family:sans-serif;font-size:12px;padding:20px;}
@@ -292,7 +302,7 @@ window.Pages.billing = {
         th{background:#f5f5f5;}</style></head><body>
         <h2>ใบแจ้งหนี้ — ${new Date().toLocaleDateString('th-TH')}</h2>
         <table><thead><tr><th>เลขที่</th><th>Tenant</th><th>Sub-Platform</th><th>ประเภท</th>
-        <th>รายละเอียด</th><th>รวมทั้งสิ้น</th><th>สถานะ</th><th>ครบกำหนด</th><th>ช่องทาง</th></tr></thead>
+        <th>รายละเอียด</th><th>รวมทั้งสิ้น</th><th>สถานะ</th><th>ครบกำหนด</th><th>ช่องทาง</th><th>รอบที่ชำระ</th></tr></thead>
         <tbody>${rows}</tbody></table>
         <script>window.onload=function(){window.print();}<\/script></body></html>`;
       const w = window.open('', '_blank'); w.document.write(html); w.document.close();
@@ -560,7 +570,13 @@ window.Pages.billingCredit = {
     const creditLines        = d.creditLines        || [];
     const creditLineRequests = d.creditLineRequests || [];
     const refundRequests     = d.refundRequests     || [];
+    const clLog              = d.creditLineApprovalLog || [];
     const pendingRefunds     = refundRequests.filter(r => r.status !== 'Approved').length;
+
+    // Unique tenant lists for filters
+    const clTenants  = [...new Set(creditLines.map(c => c.tenantName))].sort();
+    const refTenants = [...new Set(refundRequests.map(r => r.tenantName))].sort();
+    const logTenants = [...new Set(clLog.map(l => l.tenantName))].sort();
 
     return `
       <div class="page-header">
@@ -587,6 +603,10 @@ window.Pages.billingCredit = {
         <div class="tab-item" data-tab="refunds">
           <i class="fa-solid fa-rotate-left"></i> คืนเงิน
           ${pendingRefunds > 0 ? `<span class="nav-badge" style="margin-left:6px;position:relative;">${pendingRefunds}</span>` : ''}
+        </div>
+        <div class="tab-item" data-tab="cl-log">
+          <i class="fa-solid fa-clock-rotate-left"></i> ประวัติการอนุมัติ
+          ${clLog.length > 0 ? `<span class="text-xs text-muted" style="margin-left:4px;">(${clLog.length})</span>` : ''}
         </div>
       </div>
 
@@ -620,19 +640,46 @@ window.Pages.billingCredit = {
             </div>
           </div>` : ''}
 
-        <div class="text-sm uppercase text-muted font-600 mb-12">วงเงินเครดิตที่อนุมัติแล้ว</div>
-        <div class="table-wrap">
+        <!-- Filter: Credit Lines -->
+        <div class="flex items-center gap-10 mb-16" style="flex-wrap:wrap;">
+          <div class="search-bar flex-1" style="min-width:180px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="cl-filter-search" placeholder="ค้นหา Tenant...">
+          </div>
+          <select id="cl-filter-tenant" class="form-input" style="width:auto;min-width:160px;">
+            <option value="">Tenant: ทั้งหมด</option>
+            ${clTenants.map(t => `<option value="${t}">${t}</option>`).join('')}
+          </select>
+          <select id="cl-filter-source" class="form-input" style="width:auto;min-width:140px;">
+            <option value="">แหล่งที่มา: ทั้งหมด</option>
+            <option value="Developer Portal">Developer Portal</option>
+            <option value="Platform">Platform</option>
+          </select>
+          <select id="cl-filter-status" class="form-input" style="width:auto;min-width:130px;">
+            <option value="">สถานะ: ทั้งหมด</option>
+            <option value="Active">Active</option>
+            <option value="Suspended">Suspended</option>
+          </select>
+        </div>
+
+        <div class="text-sm uppercase text-muted font-600 mb-12">วงเงินเครดิตที่อนุมัติแล้ว <span id="cl-count" class="text-xs font-400">(${creditLines.length} รายการ)</span></div>
+        <div class="table-wrap" id="cl-table-body">
           <table>
-            <thead><tr><th>ID</th><th>TENANT</th><th>วงเงินสูงสุด</th><th>ใช้ไปแล้ว</th><th>คงเหลือ</th><th>การใช้งาน</th><th>รอบบิล</th><th>สถานะ</th><th>แก้ไขล่าสุด</th></tr></thead>
+            <thead><tr><th>ID</th><th>TENANT</th><th>แหล่งที่มา</th><th>วงเงินสูงสุด</th><th>ใช้ไปแล้ว</th><th>คงเหลือ</th><th>การใช้งาน</th><th>รอบบิล</th><th>เงื่อนไข</th><th>รอบที่ชำระ</th><th>สถานะ</th><th>แก้ไขล่าสุด</th><th>จัดการ</th></tr></thead>
             <tbody>
               ${creditLines.length === 0
-                ? '<tr><td colspan="10" class="text-center text-muted p-20">ยังไม่มีวงเงินเครดิตที่อนุมัติ</td></tr>'
+                ? '<tr><td colspan="13" class="text-center text-muted p-20">ยังไม่มีวงเงินเครดิตที่อนุมัติ</td></tr>'
                 : creditLines.map(cl => {
                     const usedPct  = Math.min(100, Math.round(cl.usedAmount / cl.creditLimit * 100));
                     const barColor = usedPct > 80 ? 'var(--error)' : usedPct > 50 ? 'var(--warning)' : 'var(--success)';
-                    return `<tr>
+                    const cycles   = d.billingCyclesPaid(cl.tenantId);
+                    const srcChip  = cl.source === 'Developer Portal'
+                      ? '<span class="chip chip-purple">Dev Portal</span>'
+                      : '<span class="chip chip-blue">Platform</span>';
+                    return `<tr data-source="${cl.source || 'Platform'}" data-status="${cl.status}" data-tenant="${cl.tenantName.toLowerCase()}">
                       <td class="mono text-sm">${cl.id}</td>
                       <td><a href="#" class="font-600 text-primary tenant-peek-link" data-id="${cl.tenantId}">${cl.tenantName}</a></td>
+                      <td>${srcChip}</td>
                       <td class="mono">${d.formatCurrency(cl.creditLimit)}</td>
                       <td class="mono text-warning">${d.formatCurrency(cl.usedAmount)}</td>
                       <td class="mono text-success">${d.formatCurrency(cl.availableCredit)}</td>
@@ -643,8 +690,11 @@ window.Pages.billingCredit = {
                         <span class="text-xs text-muted">${usedPct}% ใช้ไป</span>
                       </td>
                       <td class="text-sm">${cl.billingCycle} วัน</td>
+                      <td class="text-sm">${cl.paymentTerms || '-'}</td>
+                      <td class="mono text-center">${cycles > 0 ? '<span class="chip chip-green">' + cycles + ' รอบ</span>' : '<span class="text-muted">—</span>'}</td>
                       <td>${d.statusChip(cl.status)}</td>
                       <td style="white-space:nowrap;"><div class="mono text-sm text-muted">${cl.modifiedDate || '-'}</div>${cl.modifiedBy ? `<div class="text-xs text-dim">${cl.modifiedBy.split('@')[0]}</div>` : ''}</td>
+                      <td><button class="btn btn-sm btn-outline cl-edit-btn" data-id="${cl.id}"><i class="fa-solid fa-pen"></i></button></td>
                     </tr>`;
                   }).join('')}
             </tbody>
@@ -654,14 +704,32 @@ window.Pages.billingCredit = {
 
       <!-- Refunds -->
       <div id="credit-tab-refunds" class="hidden">
+        <!-- Filter: Refunds -->
+        <div class="flex items-center gap-10 mb-16" style="flex-wrap:wrap;">
+          <div class="search-bar flex-1" style="min-width:180px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="ref-filter-search" placeholder="ค้นหา Tenant หรือ Invoice...">
+          </div>
+          <select id="ref-filter-tenant" class="form-input" style="width:auto;min-width:160px;">
+            <option value="">Tenant: ทั้งหมด</option>
+            ${refTenants.map(t => `<option value="${t.toLowerCase()}">${t}</option>`).join('')}
+          </select>
+          <select id="ref-filter-status" class="form-input" style="width:auto;min-width:140px;">
+            <option value="">สถานะ: ทั้งหมด</option>
+            <option value="pending">รออนุมัติ</option>
+            <option value="approved">อนุมัติแล้ว</option>
+          </select>
+        </div>
+
         ${refundRequests.length === 0
           ? '<div class="empty-state"><i class="fa-solid fa-circle-check"></i><p>ไม่มีคำขอคืนเงิน</p></div>'
-          : `<div class="table-wrap">
+          : `<div class="table-wrap" id="ref-table-body">
               <table>
                 <thead><tr><th>ID</th><th>TENANT</th><th>ใบแจ้งหนี้</th><th>จำนวนเงิน</th><th>เหตุผล</th><th>สถานะ</th><th>Dual Approval</th><th>วันที่ขอ</th><th>แก้ไขล่าสุด</th><th>จัดการ</th></tr></thead>
                 <tbody>
-                  ${refundRequests.map(r => `
-                    <tr>
+                  ${refundRequests.map(r => {
+                    const isApproved = r.superAdminApproved && r.financeApproved;
+                    return `<tr data-status="${isApproved ? 'approved' : 'pending'}" data-tenant="${r.tenantName.toLowerCase()}" data-invoice="${r.invoiceId.toLowerCase()}">
                       <td class="mono text-sm">${r.id}</td>
                       <td class="font-600">${r.tenantName}</td>
                       <td class="mono text-sm">${r.invoiceId}</td>
@@ -681,11 +749,68 @@ window.Pages.billingCredit = {
                       <td class="text-sm text-muted">${r.requestDate}</td>
                       <td style="white-space:nowrap;"><div class="mono text-sm text-muted">${r.modifiedDate || '-'}</div>${r.modifiedBy ? `<div class="text-xs text-dim">${r.modifiedBy.split('@')[0]}</div>` : ''}</td>
                       <td>
-                        ${!r.superAdminApproved || !r.financeApproved
+                        ${!isApproved
                           ? `<button class="btn btn-success btn-sm refund-approve-btn" data-id="${r.id}"><i class="fa-solid fa-check"></i> อนุมัติ</button>`
                           : '<span class="chip chip-green">สมบูรณ์</span>'}
                       </td>
-                    </tr>`).join('')}
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>`}
+      </div>
+
+      <!-- Credit Line Approval Log (Tab) -->
+      <div id="credit-tab-cl-log" class="hidden">
+        <!-- Filter: Log -->
+        <div class="flex items-center gap-10 mb-16" style="flex-wrap:wrap;">
+          <div class="search-bar flex-1" style="min-width:180px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="clog-filter-search" placeholder="ค้นหา Credit Line ID...">
+          </div>
+          <select id="clog-filter-tenant" class="form-input" style="width:auto;min-width:160px;">
+            <option value="">Tenant: ทั้งหมด</option>
+            ${logTenants.map(t => `<option value="${t.toLowerCase()}">${t}</option>`).join('')}
+          </select>
+          <select id="clog-filter-action" class="form-input" style="width:auto;min-width:150px;">
+            <option value="">การดำเนินการ: ทั้งหมด</option>
+            <option value="Approved">อนุมัติ</option>
+            <option value="Rejected">ปฏิเสธ</option>
+            <option value="Edited">แก้ไข</option>
+            <option value="Suspended">ระงับ</option>
+          </select>
+        </div>
+
+        ${clLog.length === 0
+          ? '<div class="empty-state"><i class="fa-solid fa-clock-rotate-left"></i><p>ยังไม่มีประวัติการอนุมัติ</p></div>'
+          : `<div class="table-wrap" id="clog-table-body">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Credit Line</th><th>TENANT</th><th>การดำเนินการ</th>
+                    <th>รายละเอียด</th><th>ดำเนินการโดย</th><th>วันที่ · เวลา</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${clLog.slice().sort((a,b) => (b.actionDate+b.actionTime).localeCompare(a.actionDate+a.actionTime)).map(log => {
+                    const actionChip = log.action === 'Approved'
+                      ? '<span class="chip chip-green"><i class="fa-solid fa-check"></i> อนุมัติ</span>'
+                      : log.action === 'Rejected'
+                      ? '<span class="chip chip-red"><i class="fa-solid fa-xmark"></i> ปฏิเสธ</span>'
+                      : log.action === 'Suspended'
+                      ? '<span class="chip chip-orange"><i class="fa-solid fa-pause"></i> ระงับ</span>'
+                      : '<span class="chip chip-blue"><i class="fa-solid fa-pen"></i> แก้ไข</span>';
+                    return `<tr data-action="${log.action}" data-tenant="${log.tenantName.toLowerCase()}" data-clid="${log.creditLineId.toLowerCase()}">
+                      <td class="mono text-sm">${log.creditLineId}</td>
+                      <td class="font-600">${log.tenantName}</td>
+                      <td>${actionChip}</td>
+                      <td class="text-sm">${log.detail}</td>
+                      <td style="white-space:nowrap;">
+                        <div class="text-sm font-600">${log.actionBy.split('@')[0]}</div>
+                      </td>
+                      <td class="mono text-sm text-muted" style="white-space:nowrap;">${log.actionDate}${log.actionTime ? ' · ' + log.actionTime : ''}</td>
+                    </tr>`;
+                  }).join('')}
                 </tbody>
               </table>
             </div>`}
@@ -697,20 +822,83 @@ window.Pages.billingCredit = {
     const d    = window.MockData;
     const self = window.Pages.billingCredit;
 
-    // Sub-tab switching
+    // Sub-tab switching (3 tabs)
+    const tabPanels = ['credit', 'refunds', 'cl-log'];
     const tabs = document.querySelectorAll('#credit-tabs .tab-item');
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        const t = tab.dataset.tab;
-        document.getElementById('credit-tab-credit').classList.toggle('hidden',  t !== 'credit');
-        document.getElementById('credit-tab-refunds').classList.toggle('hidden', t !== 'refunds');
+        const active = tab.dataset.tab;
+        tabPanels.forEach(p => {
+          const el = document.getElementById('credit-tab-' + p);
+          if (el) el.classList.toggle('hidden', p !== active);
+        });
       });
     });
-    if (activeTab === 'refunds') {
-      document.querySelector('#credit-tabs .tab-item[data-tab="refunds"]')?.click();
+    if (activeTab) {
+      const target = document.querySelector('#credit-tabs .tab-item[data-tab="' + activeTab + '"]');
+      if (target) target.click();
     }
+
+    // ─── Filter: Credit Lines ───
+    const clFilterApply = () => {
+      const search = (document.getElementById('cl-filter-search')?.value || '').trim().toLowerCase();
+      const tenant = (document.getElementById('cl-filter-tenant')?.value || '').toLowerCase();
+      const source = document.getElementById('cl-filter-source')?.value || '';
+      const status = document.getElementById('cl-filter-status')?.value || '';
+      const rows = document.querySelectorAll('#cl-table-body tbody tr[data-source]');
+      let visible = 0;
+      rows.forEach(row => {
+        const matchSearch = !search || row.dataset.tenant.includes(search);
+        const matchTenant = !tenant || row.dataset.tenant === tenant;
+        const matchSource = !source || row.dataset.source === source;
+        const matchStatus = !status || row.dataset.status === status;
+        const show = matchSearch && matchTenant && matchSource && matchStatus;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      const countEl = document.getElementById('cl-count');
+      if (countEl) countEl.textContent = '(' + visible + ' รายการ)';
+    };
+    document.getElementById('cl-filter-search')?.addEventListener('input', clFilterApply);
+    document.getElementById('cl-filter-tenant')?.addEventListener('change', clFilterApply);
+    document.getElementById('cl-filter-source')?.addEventListener('change', clFilterApply);
+    document.getElementById('cl-filter-status')?.addEventListener('change', clFilterApply);
+
+    // ─── Filter: Refunds ───
+    const refFilterApply = () => {
+      const search = (document.getElementById('ref-filter-search')?.value || '').trim().toLowerCase();
+      const tenant = (document.getElementById('ref-filter-tenant')?.value || '');
+      const status = document.getElementById('ref-filter-status')?.value || '';
+      const rows = document.querySelectorAll('#ref-table-body tbody tr[data-status]');
+      rows.forEach(row => {
+        const matchSearch = !search || row.dataset.tenant.includes(search) || row.dataset.invoice.includes(search);
+        const matchTenant = !tenant || row.dataset.tenant === tenant;
+        const matchStatus = !status || row.dataset.status === status;
+        row.style.display = matchSearch && matchTenant && matchStatus ? '' : 'none';
+      });
+    };
+    document.getElementById('ref-filter-search')?.addEventListener('input', refFilterApply);
+    document.getElementById('ref-filter-tenant')?.addEventListener('change', refFilterApply);
+    document.getElementById('ref-filter-status')?.addEventListener('change', refFilterApply);
+
+    // ─── Filter: Approval Log ───
+    const clogFilterApply = () => {
+      const search = (document.getElementById('clog-filter-search')?.value || '').trim().toLowerCase();
+      const tenant = (document.getElementById('clog-filter-tenant')?.value || '');
+      const action = document.getElementById('clog-filter-action')?.value || '';
+      const rows = document.querySelectorAll('#clog-table-body tbody tr[data-action]');
+      rows.forEach(row => {
+        const matchSearch = !search || row.dataset.clid.includes(search);
+        const matchTenant = !tenant || row.dataset.tenant === tenant;
+        const matchAction = !action || row.dataset.action === action;
+        row.style.display = matchSearch && matchTenant && matchAction ? '' : 'none';
+      });
+    };
+    document.getElementById('clog-filter-search')?.addEventListener('input', clogFilterApply);
+    document.getElementById('clog-filter-tenant')?.addEventListener('change', clogFilterApply);
+    document.getElementById('clog-filter-action')?.addEventListener('change', clogFilterApply);
 
     // Tenant name → open Tenant detail modal
     document.querySelectorAll('.tenant-peek-link').forEach(a => {
@@ -720,11 +908,14 @@ window.Pages.billingCredit = {
       });
     });
 
-    // Credit Line: Approve
+    // Credit Line: Approve (pre-fill from Billing Terms Config)
     document.querySelectorAll('.cl-approve-req-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const req = (d.creditLineRequests || []).find(r => r.id === btn.dataset.id);
         if (!req) return;
+        const resolved = d.resolveBillingTerms('devportal');
+        const rc = resolved.billingCycle;
+        const rt = resolved.paymentTerms;
         App.showModal(`
           <div class="modal">
             <button class="modal-close" onclick="App.closeModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -735,15 +926,21 @@ window.Pages.billingCredit = {
               <input type="number" id="cl-limit" class="form-input" value="${req.requestedLimit}" min="1">
             </div>
             <div class="form-group">
-              <label class="form-label">รอบบิล (วัน)</label>
+              <label class="form-label">รอบบิล (วัน) <span class="text-xs text-muted">— pre-filled จาก Billing Terms Config</span></label>
               <select id="cl-cycle" class="form-input">
-                <option value="30">30 วัน</option><option value="60">60 วัน</option><option value="90">90 วัน</option>
+                <option value="15" ${rc===15?'selected':''}>15 วัน</option>
+                <option value="30" ${rc===30?'selected':''}>30 วัน</option>
+                <option value="60" ${rc===60?'selected':''}>60 วัน</option>
+                <option value="90" ${rc===90?'selected':''}>90 วัน</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">เงื่อนไขการชำระ</label>
+              <label class="form-label">เงื่อนไขการชำระ <span class="text-xs text-muted">— pre-filled จาก Billing Terms Config</span></label>
               <select id="cl-terms" class="form-input">
-                <option value="Net 30">Net 30</option><option value="Net 60">Net 60</option><option value="Net 15">Net 15</option>
+                <option value="Net 15" ${rt==='Net 15'?'selected':''}>Net 15</option>
+                <option value="Net 30" ${rt==='Net 30'?'selected':''}>Net 30</option>
+                <option value="Net 60" ${rt==='Net 60'?'selected':''}>Net 60</option>
+                <option value="Net 90" ${rt==='Net 90'?'selected':''}>Net 90</option>
               </select>
             </div>
             <div class="modal-actions">
@@ -757,12 +954,22 @@ window.Pages.billingCredit = {
             const cycle = parseInt(document.getElementById('cl-cycle').value);
             const terms = document.getElementById('cl-terms').value;
             if (!limit || limit <= 0) { App.toast('กรุณากรอกวงเงิน','error'); return; }
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0,10);
+            const timeStr = now.toTimeString().slice(0,5);
+            const newClId = 'CL-' + Date.now();
             d.creditLines = d.creditLines || [];
             d.creditLines.push({
-              id: 'CL-' + Date.now(), tenantId: req.tenantId, tenantName: req.tenantName,
+              id: newClId, tenantId: req.tenantId, tenantName: req.tenantName,
               creditLimit: limit, usedAmount: 0, availableCredit: limit,
               billingCycle: cycle, paymentTerms: terms, status: 'Active',
-              approvedDate: new Date().toISOString().slice(0,10), approvedBy: 'Finance Admin', lastInvoice: null,
+              approvedDate: dateStr, approvedBy: 'Finance Admin', lastInvoice: null,
+            });
+            d.creditLineApprovalLog = d.creditLineApprovalLog || [];
+            d.creditLineApprovalLog.unshift({
+              id: 'CLOG-' + Date.now(), creditLineId: newClId, tenantId: req.tenantId, tenantName: req.tenantName,
+              action: 'Approved', detail: 'อนุมัติวงเงิน ' + d.formatCurrency(limit) + ' · รอบบิล ' + cycle + ' วัน · ' + terms,
+              actionBy: 'finance@realfact.ai', actionDate: dateStr, actionTime: timeStr,
             });
             d.creditLineRequests = (d.creditLineRequests || []).filter(r => r.id !== req.id);
             App.closeModal();
@@ -782,6 +989,13 @@ window.Pages.billingCredit = {
           title: 'ปฏิเสธคำขอวงเงิน', confirmText: 'ปฏิเสธ', cancelText: 'ยกเลิก', type: 'danger',
         }).then(ok => {
           if (!ok) return;
+          const now = new Date();
+          d.creditLineApprovalLog = d.creditLineApprovalLog || [];
+          d.creditLineApprovalLog.unshift({
+            id: 'CLOG-' + Date.now(), creditLineId: '-', tenantId: req.tenantId, tenantName: req.tenantName,
+            action: 'Rejected', detail: 'ปฏิเสธคำขอวงเงิน ' + d.formatCurrency(req.requestedLimit),
+            actionBy: 'finance@realfact.ai', actionDate: now.toISOString().slice(0,10), actionTime: now.toTimeString().slice(0,5),
+          });
           d.creditLineRequests = (d.creditLineRequests || []).filter(r => r.id !== req.id);
           App.toast('ปฏิเสธคำขอวงเงินแล้ว','error');
           self._rerender('credit');
@@ -831,6 +1045,100 @@ window.Pages.billingCredit = {
             App.closeModal();
             App.toast('อนุมัติคืนเงินสำเร็จ','success');
             self._rerender('refunds');
+          });
+        }, 50);
+      });
+    });
+
+    // Credit Line: Edit existing
+    document.querySelectorAll('.cl-edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cl = (d.creditLines || []).find(c => c.id === btn.dataset.id);
+        if (!cl) return;
+        App.showModal(`
+          <div class="modal">
+            <button class="modal-close" onclick="App.closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-title mb-8">แก้ไข Credit Line</div>
+            <div class="modal-subtitle mb-16">${cl.tenantName} · ${cl.id}</div>
+            <div class="form-group">
+              <label class="form-label">วงเงินสูงสุด (THB)</label>
+              <input type="number" id="cl-edit-limit" class="form-input" value="${cl.creditLimit}" min="1">
+            </div>
+            <div class="grid-2 gap-12">
+              <div class="form-group">
+                <label class="form-label">รอบบิล (วัน)</label>
+                <select id="cl-edit-cycle" class="form-input">
+                  <option value="15" ${cl.billingCycle===15?'selected':''}>15 วัน</option>
+                  <option value="30" ${cl.billingCycle===30?'selected':''}>30 วัน</option>
+                  <option value="60" ${cl.billingCycle===60?'selected':''}>60 วัน</option>
+                  <option value="90" ${cl.billingCycle===90?'selected':''}>90 วัน</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">เงื่อนไขการชำระ</label>
+                <select id="cl-edit-terms" class="form-input">
+                  <option value="Net 15" ${cl.paymentTerms==='Net 15'?'selected':''}>Net 15</option>
+                  <option value="Net 30" ${cl.paymentTerms==='Net 30'?'selected':''}>Net 30</option>
+                  <option value="Net 60" ${cl.paymentTerms==='Net 60'?'selected':''}>Net 60</option>
+                  <option value="Net 90" ${cl.paymentTerms==='Net 90'?'selected':''}>Net 90</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">สถานะ</label>
+              <select id="cl-edit-status" class="form-input">
+                <option value="Active" ${cl.status==='Active'?'selected':''}>Active</option>
+                <option value="Suspended" ${cl.status==='Suspended'?'selected':''}>Suspended</option>
+              </select>
+            </div>
+            <div class="modal-actions">
+              <button class="btn btn-outline" onclick="App.closeModal()">ยกเลิก</button>
+              <button class="btn btn-primary" id="cl-edit-save"><i class="fa-solid fa-save"></i> บันทึก</button>
+            </div>
+          </div>`);
+        setTimeout(() => {
+          document.getElementById('cl-edit-save')?.addEventListener('click', () => {
+            const newLimit = parseFloat(document.getElementById('cl-edit-limit').value);
+            if (!newLimit || newLimit <= 0) { App.toast('กรุณากรอกวงเงิน','error'); return; }
+            const oldLimit = cl.creditLimit;
+            const oldCycle = cl.billingCycle;
+            const oldTerms = cl.paymentTerms;
+            const oldStatus = cl.status;
+            cl.creditLimit    = newLimit;
+            cl.availableCredit = newLimit - cl.usedAmount;
+            cl.billingCycle   = parseInt(document.getElementById('cl-edit-cycle').value);
+            cl.paymentTerms   = document.getElementById('cl-edit-terms').value;
+            cl.status         = document.getElementById('cl-edit-status').value;
+            cl.modifiedDate   = new Date().toISOString().slice(0,10);
+            cl.modifiedBy     = 'finance@realfact.ai';
+            // Build change detail
+            const changes = [];
+            if (oldLimit !== cl.creditLimit) changes.push('วงเงิน ' + d.formatCurrency(oldLimit) + ' → ' + d.formatCurrency(cl.creditLimit));
+            if (oldCycle !== cl.billingCycle) changes.push('รอบบิล ' + oldCycle + ' → ' + cl.billingCycle + ' วัน');
+            if (oldTerms !== cl.paymentTerms) changes.push('เงื่อนไข ' + oldTerms + ' → ' + cl.paymentTerms);
+            if (oldStatus !== cl.status) changes.push('สถานะ ' + oldStatus + ' → ' + cl.status);
+            const logAction = cl.status !== oldStatus && cl.status === 'Suspended' ? 'Suspended' : 'Edited';
+            const now = new Date();
+            d.creditLineApprovalLog = d.creditLineApprovalLog || [];
+            d.creditLineApprovalLog.unshift({
+              id: 'CLOG-' + Date.now(), creditLineId: cl.id, tenantId: cl.tenantId, tenantName: cl.tenantName,
+              action: logAction, detail: changes.length ? changes.join(' · ') : 'ไม่มีการเปลี่ยนแปลง',
+              actionBy: 'finance@realfact.ai', actionDate: now.toISOString().slice(0,10), actionTime: now.toTimeString().slice(0,5),
+            });
+            // Sync to dpTenants if Developer Portal
+            if (cl.source === 'Developer Portal') {
+              const dpt = (d.dpTenants || []).find(t => t.id === cl.tenantId);
+              if (dpt && dpt.creditLine) {
+                dpt.creditLine.creditLimit = cl.creditLimit;
+                dpt.creditLine.availableCredit = cl.availableCredit;
+                dpt.creditLine.billingCycle = cl.billingCycle;
+                dpt.creditLine.paymentTerms = cl.paymentTerms;
+                dpt.creditLine.status = cl.status;
+              }
+            }
+            App.closeModal();
+            App.toast('บันทึก Credit Line สำเร็จ','success');
+            self._rerender('credit');
           });
         }, 50);
       });
