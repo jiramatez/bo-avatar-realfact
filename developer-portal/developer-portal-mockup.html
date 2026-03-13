@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RealFact Developer Portal — Mockup (PRD v4 Aligned)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        brand: { 50:'#f0f4ff', 500:'#5c7cfa', 600:'#4c6ef5', 700:'#4263eb' },
+        success: { 50:'#ebfbee', 500:'#40c057', 600:'#2f9e44' },
+        warning: { 50:'#fff9db', 500:'#fab005', 600:'#f59f00' },
+        danger:  { 50:'#fff5f5', 500:'#fa5252', 600:'#e03131' },
+      }}}
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .sidebar-item { transition: all 0.15s ease; }
+    .sidebar-item:hover { background: rgba(0,0,0,0.06); }
+    .sidebar-item.active { background: rgba(0,0,0,0.08); font-weight: 600; }
+    .card { border: 1px solid #e5e7eb; border-radius: 0.625rem; background: white; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border-radius: 0.5rem; font-size: 14px; font-weight: 500; transition: all 0.15s; cursor: pointer; }
+    .btn-primary { background: #18181b; color: white; }
+    .btn-primary:hover { background: #27272a; }
+    .btn-outline { border: 1px solid #e5e7eb; background: white; color: #18181b; }
+    .btn-outline:hover { background: #f4f4f5; }
+    .btn-ghost { background: transparent; color: #71717a; }
+    .btn-ghost:hover { background: #f4f4f5; color: #18181b; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-success { background: #22c55e; color: white; }
+    .btn-success:hover { background: #16a34a; }
+    .input { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 8px 12px; font-size: 14px; width: 100%; outline: none; transition: border 0.15s; }
+    .input:focus { border-color: #18181b; box-shadow: 0 0 0 1px #18181b; }
+    .table-row:hover { background: #fafafa; }
+    .tab { padding: 8px 16px; font-size: 14px; font-weight: 500; color: #71717a; border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.15s; }
+    .tab.active { color: #18181b; border-bottom-color: #18181b; }
+    .tab:hover { color: #18181b; }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: flex; align-items: center; justify-content: center; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .step-active { background: #18181b; color: white; }
+    .step-done { background: #22c55e; color: white; }
+    .step-pending { background: #e5e7eb; color: #71717a; }
+    .timeline-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid; flex-shrink: 0; }
+  </style>
+</head>
+<body class="bg-white text-zinc-900 min-h-screen">
+
+  <!-- Backoffice Auth Integration -->
+  <script src="../backoffice-ui/js/mock-data.js"></script>
+  <script src="../backoffice-ui/js/auth.js"></script>
+  <script>
+  (function() {
+    if (window.Auth) {
+      var restored = Auth.init();
+      if (restored && Auth.activeContext()) {
+        var ctx = Auth.activeContext();
+        if (ctx.role === 'subplatform_admin' || ctx.role === 'subplatform_member') {
+          window._boAuthReady = true;
+          var user = Auth.currentUser();
+          if (user) { window._boUser = user; window._boCtx = ctx; }
+        } else { Auth.redirectToZone(ctx.role); }
+      }
+    }
+  })();
+  </script>
+
+  <!-- ==================== LANDING PAGE ==================== -->
+  <div id="page-landing" class="min-h-screen">
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 border-b border-zinc-200">
+      <div class="max-w-6xl mx-auto flex items-center justify-between px-6 h-16">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white font-bold text-sm">RF</div>
+          <span class="font-semibold text-lg">Developer Portal</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="btn btn-ghost" onclick="showPage('page-login')">Sign in</button>
+          <button class="btn btn-primary" onclick="showPage('page-register')">Get Started</button>
+        </div>
+      </div>
+    </header>
+    <section class="max-w-6xl mx-auto px-6 py-24 text-center">
+      <div class="inline-flex items-center gap-2 bg-zinc-100 rounded-full px-4 py-1.5 text-sm text-zinc-600 mb-6">
+        <span class="status-dot bg-green-500"></span> API Status: All Systems Operational
+      </div>
+      <h1 class="text-5xl font-bold tracking-tight mb-6">Build with AI.<br>Ship Faster.</h1>
+      <p class="text-xl text-zinc-500 max-w-2xl mx-auto mb-10">
+        เข้าถึง AI Services ของ RealFact ผ่าน API ที่ใช้งานง่าย<br>
+        สมัคร → Verify Email → สร้าง App → เริ่มเรียก API ภายใน 15 นาที
+      </p>
+      <div class="flex items-center justify-center gap-4">
+        <button class="btn btn-primary text-base px-8 py-3" onclick="showPage('page-register')">เริ่มต้นใช้งานฟรี</button>
+        <button class="btn btn-outline text-base px-8 py-3" onclick="showSection('sec-api-docs')">ดู API Docs</button>
+      </div>
+      <div class="max-w-2xl mx-auto mt-16 text-left">
+        <div class="bg-zinc-950 rounded-xl overflow-hidden shadow-2xl">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-zinc-800">
+            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+            <span class="ml-2 text-zinc-400 text-sm">terminal</span>
+          </div>
+          <pre class="p-6 text-sm leading-relaxed"><code class="text-zinc-300"><span class="text-green-400">$</span> curl -X POST https://api.realfact.tech/v1/summarize \
+  -H <span class="text-yellow-300">"Authorization: Bearer rf-sk-prod-abc123"</span> \
+  -H <span class="text-yellow-300">"Content-Type: application/json"</span> \
+  -d <span class="text-yellow-300">'{"text": "Your document here...", "max_length": 100}'</span>
+
+<span class="text-zinc-500"># Response (200 OK) — 1.2s</span>
+{
+  <span class="text-blue-400">"summary"</span>: <span class="text-green-300">"AI-generated summary of your document..."</span>,
+  <span class="text-blue-400">"tokens_used"</span>: <span class="text-orange-300">142</span>
+}</code></pre>
+        </div>
+      </div>
+    </section>
+    <footer class="border-t border-zinc-200 py-8">
+      <div class="max-w-6xl mx-auto px-6 flex items-center justify-between text-sm text-zinc-400">
+        <span>&copy; 2026 RealFact. All rights reserved.</span>
+        <div class="flex gap-6"><a href="#" class="hover:text-zinc-600">Docs</a><a href="#" class="hover:text-zinc-600">Terms</a><a href="#" class="hover:text-zinc-600">Privacy</a></div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ==================== LOGIN PAGE ==================== -->
+  <div id="page-login" class="hidden min-h-screen flex items-center justify-center bg-zinc-50">
+    <div class="w-full max-w-md mx-auto p-8">
+      <div class="text-center mb-8">
+        <div class="w-12 h-12 bg-zinc-900 rounded-xl flex items-center justify-center text-white font-bold text-lg mx-auto mb-4">RF</div>
+        <h1 class="text-2xl font-bold">Welcome back</h1>
+        <p class="text-zinc-500 mt-1">เข้าสู่ระบบ Developer Portal</p>
+      </div>
+      <div class="card p-6 space-y-4">
+        <div><label class="block text-sm font-medium mb-1.5">Email</label><input type="email" class="input" placeholder="developer@company.com" value="kong@startup.io"></div>
+        <div><label class="block text-sm font-medium mb-1.5">Password</label><input type="password" class="input" placeholder="••••••••" value="password123"></div>
+        <div class="flex items-center justify-between">
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" checked> Remember me</label>
+          <a href="#" class="text-sm text-zinc-500 hover:text-zinc-900" onclick="showPage('page-forgot-password')">Forgot password?</a>
+        </div>
+        <button class="btn btn-primary w-full py-2.5" onclick="showPage('page-dashboard')">Sign in</button>
+        <p class="text-center text-sm text-zinc-500">ยังไม่มีบัญชี? <a href="#" class="text-zinc-900 font-medium" onclick="showPage('page-register')">สมัครสมาชิก</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== REGISTER PAGE ==================== -->
+  <div id="page-register" class="hidden min-h-screen flex items-center justify-center bg-zinc-50">
+    <div class="w-full max-w-md mx-auto p-8">
+      <div class="text-center mb-8">
+        <div class="w-12 h-12 bg-zinc-900 rounded-xl flex items-center justify-center text-white font-bold text-lg mx-auto mb-4">RF</div>
+        <h1 class="text-2xl font-bold">Create your account</h1>
+        <p class="text-zinc-500 mt-1">สมัครแล้ว verify email เพื่อเริ่มใช้งาน</p>
+      </div>
+      <div class="card p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium mb-1.5">First Name</label><input type="text" class="input" placeholder="ก้อง" value="ก้อง"></div>
+          <div><label class="block text-sm font-medium mb-1.5">Last Name</label><input type="text" class="input" placeholder="สมาร์ท" value="สมาร์ท"></div>
+        </div>
+        <div><label class="block text-sm font-medium mb-1.5">Email</label><input type="email" class="input" placeholder="developer@company.com" value="kong@startup.io"></div>
+        <div><label class="block text-sm font-medium mb-1.5">Company (optional)</label><input type="text" class="input" placeholder="บริษัทของคุณ" value="SmartDev Co., Ltd."></div>
+        <div><label class="block text-sm font-medium mb-1.5">Password</label><input type="password" class="input" placeholder="อย่างน้อย 8 ตัวอักษร (A-Z, a-z, 0-9)" value="password123"></div>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <label class="flex items-start gap-2 text-sm"><input type="checkbox" checked class="mt-0.5"><span>ฉันยอมรับ <a href="#" class="text-blue-600 underline">Terms of Service</a> และยินยอม <a href="#" class="text-blue-600 underline">PDPA Policy</a></span></label>
+        </div>
+        <button class="btn btn-primary w-full py-2.5" onclick="showPage('page-register-success')">สมัครสมาชิก</button>
+        <p class="text-center text-sm text-zinc-500">มีบัญชีแล้ว? <a href="#" class="text-zinc-900 font-medium" onclick="showPage('page-login')">เข้าสู่ระบบ</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== REGISTER SUCCESS — VERIFY EMAIL ==================== -->
+  <div id="page-register-success" class="hidden min-h-screen flex items-center justify-center bg-zinc-50">
+    <div class="w-full max-w-lg mx-auto p-8 text-center">
+      <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mx-auto mb-6">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      </div>
+      <h1 class="text-2xl font-bold mb-2">ตรวจสอบ Email ของคุณ</h1>
+      <p class="text-zinc-500 mb-6">เราส่งลิงก์ยืนยันไปที่ <strong class="text-zinc-900">kong@startup.io</strong></p>
+      <div class="card p-5 mb-6 text-left">
+        <div class="space-y-3 text-sm">
+          <div class="flex items-start gap-3"><span class="text-blue-600 font-bold">1</span><span>เปิด Email ของคุณ</span></div>
+          <div class="flex items-start gap-3"><span class="text-blue-600 font-bold">2</span><span>คลิกลิงก์ "Verify Email" ในอีเมล (หมดอายุภายใน 24 ชั่วโมง)</span></div>
+          <div class="flex items-start gap-3"><span class="text-blue-600 font-bold">3</span><span>Login แล้วสร้าง App เพื่อรับ API Key</span></div>
+        </div>
+      </div>
+      <p class="text-sm text-zinc-400 mb-4">ไม่ได้รับอีเมล? ตรวจสอบโฟลเดอร์ spam หรือ</p>
+      <button class="btn btn-outline" onclick="showPage('page-email-verified')">Resend Verification Email</button>
+    </div>
+  </div>
+
+  <!-- ==================== EMAIL VERIFIED SUCCESS ==================== -->
+  <div id="page-email-verified" class="hidden min-h-screen flex items-center justify-center bg-zinc-50">
+    <div class="w-full max-w-md mx-auto p-8 text-center">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-6">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <h1 class="text-2xl font-bold mb-2">Email ยืนยันสำเร็จ!</h1>
+      <p class="text-zinc-500 mb-8">บัญชีของคุณพร้อมใช้งานแล้ว เข้าสู่ระบบเพื่อสร้าง App และรับ API Key</p>
+      <button class="btn btn-primary px-8 py-2.5" onclick="showPage('page-login')">เข้าสู่ระบบ</button>
+    </div>
+  </div>
+
+  <!-- ==================== FORGOT PASSWORD ==================== -->
+  <div id="page-forgot-password" class="hidden min-h-screen flex items-center justify-center bg-zinc-50">
+    <div class="w-full max-w-md mx-auto p-8">
+      <div class="text-center mb-8">
+        <div class="w-12 h-12 bg-zinc-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+        </div>
+        <h1 class="text-2xl font-bold">Forgot Password</h1>
+        <p class="text-zinc-500 mt-1">กรอก email เพื่อรับลิงก์รีเซ็ตรหัสผ่าน</p>
+      </div>
+      <div class="card p-6 space-y-4">
+        <div><label class="block text-sm font-medium mb-1.5">Email</label><input type="email" class="input" placeholder="developer@company.com"></div>
+        <button class="btn btn-primary w-full py-2.5" onclick="showPage('page-forgot-sent')">ส่งลิงก์รีเซ็ต</button>
+        <p class="text-center text-sm text-zinc-500"><a href="#" class="text-zinc-900 font-medium" onclick="showPage('page-login')">← กลับไปหน้า Login</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== FORGOT PASSWORD — EMAIL SENT ==================== -->
+  <div id="page-forgot-sent" class="hidden min-h-screen flex items-center justify-center bg-zinc-50">
+    <div class="w-full max-w-md mx-auto p-8 text-center">
+      <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mx-auto mb-6">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      </div>
+      <h1 class="text-2xl font-bold mb-2">ตรวจสอบ Email ของคุณ</h1>
+      <p class="text-zinc-500 mb-6">หากอีเมลนี้มีอยู่ในระบบ เราจะส่งลิงก์รีเซ็ตรหัสผ่านให้</p>
+      <div class="card p-5 mb-6 text-left">
+        <div class="space-y-3 text-sm">
+          <div class="flex items-start gap-3"><span class="text-blue-600 font-bold">1</span><span>เปิด Email ของคุณ</span></div>
+          <div class="flex items-start gap-3"><span class="text-blue-600 font-bold">2</span><span>คลิกลิงก์ "Reset Password" (หมดอายุภายใน 1 ชั่วโมง)</span></div>
+          <div class="flex items-start gap-3"><span class="text-blue-600 font-bold">3</span><span>ตั้งรหัสผ่านใหม่</span></div>
+        </div>
+      </div>
+      <p class="text-sm text-zinc-400 mb-4">ไม่ได้รับอีเมล? ตรวจสอบโฟลเดอร์ spam</p>
+      <button class="btn btn-outline" onclick="showPage('page-reset-password')">จำลอง: คลิกลิงก์จาก Email</button>
+    </div>
+  </div>
+
+  <!-- ==================== RESET PASSWORD — NEW PASSWORD ==================== -->
+  <div id="page-reset-password" class="hidden min-h-screen flex items-center justify-center bg-zinc-50">
+    <div class="w-full max-w-md mx-auto p-8">
+      <div class="text-center mb-8">
+        <div class="w-12 h-12 bg-zinc-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+        </div>
+        <h1 class="text-2xl font-bold">ตั้งรหัสผ่านใหม่</h1>
+        <p class="text-zinc-500 mt-1">กรอกรหัสผ่านใหม่สำหรับบัญชีของคุณ</p>
+      </div>
+      <div class="card p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1.5">New Password</label>
+          <input type="password" class="input" placeholder="อย่างน้อย 8 ตัวอักษร (A-Z, a-z, 0-9)">
+          <div class="mt-2 space-y-1">
+            <div class="flex items-center gap-2 text-xs"><span class="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-white text-[10px]">&#10003;</span><span class="text-green-700">อย่างน้อย 8 ตัวอักษร</span></div>
+            <div class="flex items-center gap-2 text-xs"><span class="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-white text-[10px]">&#10003;</span><span class="text-green-700">มีตัวพิมพ์ใหญ่ (A-Z)</span></div>
+            <div class="flex items-center gap-2 text-xs"><span class="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-white text-[10px]">&#10003;</span><span class="text-green-700">มีตัวพิมพ์เล็ก (a-z)</span></div>
+            <div class="flex items-center gap-2 text-xs"><span class="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-white text-[10px]">&#10003;</span><span class="text-green-700">มีตัวเลข (0-9)</span></div>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1.5">Confirm New Password</label>
+          <input type="password" class="input" placeholder="••••••••">
+        </div>
+        <button class="btn btn-primary w-full py-2.5" onclick="showPage('page-reset-success')">รีเซ็ตรหัสผ่าน</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== RESET PASSWORD — SUCCESS ==================== -->
+  <div id="page-reset-success" class="hidden min-h-screen flex items-center justify-center bg-zinc-50">
+    <div class="w-full max-w-md mx-auto p-8 text-center">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-6">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <h1 class="text-2xl font-bold mb-2">รีเซ็ตรหัสผ่านสำเร็จ!</h1>
+      <p class="text-zinc-500 mb-8">รหัสผ่านของคุณถูกเปลี่ยนเรียบร้อยแล้ว กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่</p>
+      <button class="btn btn-primary px-8 py-2.5" onclick="showPage('page-login')">เข้าสู่ระบบ</button>
+    </div>
+  </div>
+
+  <!-- ==================== DASHBOARD LAYOUT ==================== -->
+  <div id="page-dashboard" class="hidden min-h-screen flex">
+
+    <!-- Developer Sidebar -->
+    <aside id="sidebar-dev" class="w-64 border-r border-zinc-200 bg-zinc-50/50 flex flex-col h-screen sticky top-0">
+      <div class="flex items-center gap-2 px-5 h-16 border-b border-zinc-200">
+        <div class="w-7 h-7 bg-zinc-900 rounded-lg flex items-center justify-center text-white font-bold text-xs">RF</div>
+        <span class="font-semibold">Developer Portal</span>
+      </div>
+      <nav class="flex-1 p-3 space-y-1">
+        <a onclick="showSection('sec-dashboard')" class="sidebar-item active flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer" data-section="sec-dashboard">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+          Dashboard</a>
+        <a onclick="showSection('sec-apps')" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer" data-section="sec-apps">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          Apps</a>
+        <a onclick="showSection('sec-apikeys')" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer" data-section="sec-apikeys">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+          API Keys</a>
+        <a onclick="showSection('sec-api-docs')" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer" data-section="sec-api-docs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          API Docs</a>
+        <div class="pt-4 pb-2"><p class="px-3 text-xs font-medium text-zinc-400 uppercase tracking-wider">Account</p></div>
+        <a onclick="showSection('sec-profile')" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer" data-section="sec-profile">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          Profile</a>
+      </nav>
+      <div class="border-t border-zinc-200 p-3">
+        <div class="flex items-center gap-3 px-3 py-2">
+          <div class="w-8 h-8 bg-zinc-200 rounded-full flex items-center justify-center text-xs font-medium">กส</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">ก้อง สมาร์ท</p>
+            <p class="text-xs text-zinc-400 truncate">kong@startup.io</p>
+          </div>
+          <button class="btn btn-ghost p-1" onclick="doLogout()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 min-h-screen">
+
+      <!-- ===== DEVELOPER DASHBOARD ===== -->
+      <section id="sec-dashboard" class="fade-in">
+        <div class="border-b border-zinc-200 px-6 h-14 flex items-center"><h1 class="text-lg font-semibold">Dashboard</h1></div>
+        <div class="p-6 space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="card p-5"><p class="text-sm text-zinc-500 mb-1">Total Apps</p><p class="text-2xl font-bold">4</p><p class="text-xs text-zinc-400 mt-1">4/10 limit</p></div>
+            <div class="card p-5"><p class="text-sm text-zinc-500 mb-1">Active API Keys</p><p class="text-2xl font-bold">3</p><p class="text-xs text-zinc-400 mt-1">1 sandbox, 1 production, 1 revoked</p></div>
+            <div class="card p-5"><p class="text-sm text-zinc-500 mb-1">API Calls (This Month)</p><p class="text-2xl font-bold">12,847</p><p class="text-xs text-green-600 mt-1">↑ 23% from last month</p></div>
+            <div class="card p-5"><p class="text-sm text-zinc-500 mb-1">Needs Action</p><p class="text-2xl font-bold text-red-600">1</p><p class="text-xs text-red-500 mt-1">1 app rejected — needs revision</p></div>
+          </div>
+          <div class="card">
+            <div class="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
+              <h3 class="font-semibold">Recent Apps</h3>
+              <button class="btn btn-outline text-xs py-1 px-3" onclick="showSection('sec-apps')">View All</button>
+            </div>
+            <table class="w-full">
+              <thead><tr class="border-b border-zinc-100">
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">App Name</th>
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">Status</th>
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">API Key</th>
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">Created</th>
+              </tr></thead>
+              <tbody>
+                <tr class="table-row border-b border-zinc-50"><td class="px-5 py-3 text-sm font-medium">Document Summarizer App</td><td class="px-5 py-3"><span class="badge bg-green-50 text-green-700">Approved</span></td><td class="px-5 py-3 text-sm text-zinc-500 font-mono">rf-sk-prod-...8f6a</td><td class="px-5 py-3 text-sm text-zinc-500">12 Mar 2026</td></tr>
+                <tr class="table-row border-b border-zinc-50"><td class="px-5 py-3 text-sm font-medium">Chatbot Integration</td><td class="px-5 py-3"><span class="badge bg-red-50 text-red-700">Rejected</span></td><td class="px-5 py-3 text-sm text-zinc-500 font-mono">rf-sk-sandbox-...2c4e</td><td class="px-5 py-3 text-sm text-zinc-500">5 Mar 2026</td></tr>
+                <tr class="table-row"><td class="px-5 py-3 text-sm font-medium">My Test App</td><td class="px-5 py-3"><span class="badge bg-yellow-50 text-yellow-700">Sandbox</span></td><td class="px-5 py-3 text-sm text-zinc-500 font-mono">rf-sk-sandbox-...abc1</td><td class="px-5 py-3 text-sm text-zinc-500">1 Mar 2026</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== APPS LIST ===== -->
+      <section id="sec-apps" class="hidden fade-in">
+        <div class="border-b border-zinc-200 px-6 h-14 flex items-center justify-between">
+          <h1 class="text-lg font-semibold">Apps</h1>
+          <button class="btn btn-primary text-sm" onclick="showSection('sec-app-create')">+ Create App</button>
+        </div>
+        <div class="p-6">
+          <div class="card">
+            <table class="w-full">
+              <thead><tr class="border-b border-zinc-200">
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">Name</th>
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">Description</th>
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">Status</th>
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">API Key</th>
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">Created</th>
+                <th class="text-right text-xs font-medium text-zinc-400 px-5 py-3">Actions</th>
+              </tr></thead>
+              <tbody>
+                <tr class="table-row border-b border-zinc-50"><td class="px-5 py-3 text-sm font-medium">Document Summarizer App</td><td class="px-5 py-3 text-sm text-zinc-500">สรุปเอกสารด้วย AI</td><td class="px-5 py-3"><span class="badge bg-green-50 text-green-700">Approved</span></td><td class="px-5 py-3 text-sm text-zinc-500 font-mono">rf-sk-prod-...8f6a</td><td class="px-5 py-3 text-sm text-zinc-500">12 Mar 2026</td><td class="px-5 py-3 text-right"><button class="btn btn-ghost text-xs" onclick="showSection('sec-app-detail')">Manage</button></td></tr>
+                <tr class="table-row border-b border-zinc-50"><td class="px-5 py-3 text-sm font-medium">Chatbot Integration</td><td class="px-5 py-3 text-sm text-zinc-500">Chatbot สำหรับ customer service</td><td class="px-5 py-3"><span class="badge bg-red-50 text-red-700">Rejected</span></td><td class="px-5 py-3 text-sm text-zinc-500 font-mono">rf-sk-sandbox-...2c4e</td><td class="px-5 py-3 text-sm text-zinc-500">5 Mar 2026</td><td class="px-5 py-3 text-right"><button class="btn btn-ghost text-xs" onclick="showSection('sec-app-detail-rejected')">Manage</button></td></tr>
+                <tr class="table-row border-b border-zinc-50"><td class="px-5 py-3 text-sm font-medium">My Test App</td><td class="px-5 py-3 text-sm text-zinc-500">Auto-created for testing</td><td class="px-5 py-3"><span class="badge bg-yellow-50 text-yellow-700">Sandbox</span></td><td class="px-5 py-3 text-sm text-zinc-500 font-mono">rf-sk-sandbox-...abc1</td><td class="px-5 py-3 text-sm text-zinc-500">1 Mar 2026</td><td class="px-5 py-3 text-right"><button class="btn btn-ghost text-xs" onclick="showSection('sec-app-detail-sandbox')">Manage</button></td></tr>
+                <tr class="table-row"><td class="px-5 py-3 text-sm font-medium">Payment Gateway</td><td class="px-5 py-3 text-sm text-zinc-500">ระบบชำระเงิน</td><td class="px-5 py-3"><span class="badge bg-zinc-100 text-zinc-500">Revoked</span></td><td class="px-5 py-3 text-sm text-zinc-500 font-mono text-zinc-300 line-through">rf-sk-prod-...9d3f</td><td class="px-5 py-3 text-sm text-zinc-500">20 Feb 2026</td><td class="px-5 py-3 text-right"><button class="btn btn-ghost text-xs" onclick="showSection('sec-app-detail')">Manage</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== CREATE APP ===== -->
+      <section id="sec-app-create" class="hidden fade-in">
+        <div class="border-b border-zinc-200 px-6 h-14 flex items-center gap-3">
+          <button class="btn btn-ghost text-xs p-1" onclick="showSection('sec-apps')">← Back</button>
+          <h1 class="text-lg font-semibold">Create New App</h1>
+        </div>
+        <div class="p-6 max-w-lg">
+          <div class="card p-5 space-y-4">
+            <div><label class="block text-sm font-medium mb-1.5">App Name *</label><input type="text" class="input" placeholder="e.g., My Chatbot App"><p class="text-xs text-zinc-400 mt-1">ชื่อต้องไม่ซ้ำกับ App อื่นของคุณ</p></div>
+            <div><label class="block text-sm font-medium mb-1.5">Description</label><textarea class="input" rows="3" placeholder="อธิบายสั้นๆ ว่า App นี้ใช้ทำอะไร (optional, max 500 chars)"></textarea></div>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+              <p class="font-medium text-yellow-800">App จะเริ่มในโหมด Sandbox</p>
+              <p class="text-yellow-700 text-xs mt-1">คุณสามารถ Submit for Production ได้ภายหลังเพื่อปลดล็อค production access</p>
+            </div>
+            <button class="btn btn-primary" onclick="showApiKeyModal()">Create App</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== API KEY REVEAL MODAL (shown once after app creation) ===== -->
+      <section id="sec-apikey-reveal" class="hidden fade-in">
+        <div class="border-b border-zinc-200 px-6 h-14 flex items-center gap-3">
+          <h1 class="text-lg font-semibold">App Created Successfully</h1>
+          <span class="badge bg-yellow-50 text-yellow-700">Sandbox</span>
+        </div>
+        <div class="p-6 max-w-lg mx-auto space-y-6">
+          <div class="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+            <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <div>
+              <p class="text-sm font-medium text-green-800">App "My Chatbot App" สร้างสำเร็จ!</p>
+              <p class="text-xs text-green-700 mt-1">App อยู่ในโหมด Sandbox — สามารถทดสอบ API ได้ทันที</p>
+            </div>
+          </div>
+          <div class="card p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <h3 class="font-semibold text-red-600">Your API Key (shown once only!)</h3>
+            </div>
+            <div class="bg-zinc-950 rounded-lg px-4 py-3 flex items-center gap-3 mb-3">
+              <code class="text-sm font-mono text-green-400 flex-1 break-all">rf-sk-sandbox-a1b2c3d4e5f6g7h8i9j0k1l2m3n4</code>
+              <button class="btn btn-outline text-xs py-1 border-zinc-600 text-zinc-300 hover:bg-zinc-800" onclick="navigator.clipboard.writeText('rf-sk-sandbox-a1b2c3d4e5f6g7h8i9j0k1l2m3n4')">Copy</button>
+            </div>
+            <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+              <p class="font-medium mb-1">Key นี้จะไม่แสดงอีกหลังจากปิดหน้านี้</p>
+              <p class="text-xs text-red-600">กรุณา copy และเก็บไว้ในที่ปลอดภัย หากทำหายต้อง Regenerate ใหม่ (key เก่าจะถูก revoke ทันที)</p>
+            </div>
+          </div>
+          <div class="card p-5">
+            <h4 class="text-sm font-medium mb-3">Sandbox Limitations</h4>
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span><span>Rate limit: <strong>30 requests/day</strong></span></div>
+              <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span><span>ใช้ได้เฉพาะ Sandbox endpoints</span></div>
+              <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span><span>ไม่สามารถใช้กับ Production data ได้</span></div>
+            </div>
+            <p class="text-xs text-zinc-400 mt-3">ต้องการ production access? Submit for Production Approval ได้ที่หน้า App Detail</p>
+          </div>
+          <label class="flex items-start gap-2 text-sm bg-blue-50 border border-blue-200 rounded-lg p-3 cursor-pointer" id="ack-checkbox-label">
+            <input type="checkbox" class="mt-0.5" id="ack-checkbox" onchange="document.getElementById('ack-btn').disabled = !this.checked">
+            <span>ฉันได้ copy API Key เรียบร้อยแล้ว และเข้าใจว่า Key นี้จะไม่แสดงอีก</span>
+          </label>
+          <button id="ack-btn" class="btn btn-primary w-full py-2.5" disabled onclick="showSection('sec-app-detail-sandbox')">ไปที่ App Detail</button>
+        </div>
+      </section>
+
+      <!-- ===== APP DETAIL — SANDBOX STATE ===== -->
+      <section id="sec-app-detail-sandbox" class="hidden fade-in">
+        <div class="border-b border-zinc-200 px-6 h-14 flex items-center gap-3">
+          <button class="btn btn-ghost text-xs p-1" onclick="showSection('sec-apps')">← Back</button>
+          <h1 class="text-lg font-semibold">My Chatbot App</h1>
+          <span class="badge bg-yellow-50 text-yellow-700 ml-2">Sandbox</span>
+        </div>
+        <div class="p-6 max-w-3xl space-y-6">
+          <!-- App Info -->
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">App Information</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div><label class="block text-sm font-medium mb-1.5">App Name</label><input type="text" class="input" value="My Chatbot App"></div>
+              <div><label class="block text-sm font-medium mb-1.5">Created</label><input type="text" class="input" value="13 Mar 2026" disabled></div>
+            </div>
+            <div class="mt-4"><label class="block text-sm font-medium mb-1.5">Description</label><textarea class="input" rows="2">Chatbot สำหรับ customer service</textarea></div>
+            <button class="btn btn-outline mt-3 text-sm">Save Changes</button>
+          </div>
+          <!-- API Key -->
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">API Key</h3>
+            <div class="flex items-center gap-3 bg-zinc-50 rounded-lg px-4 py-3">
+              <code class="text-sm font-mono flex-1">rf-sk-sandbox-••••••••••••n4</code>
+              <button class="btn btn-outline text-xs py-1">Regenerate</button>
+              <button class="btn btn-ghost text-xs py-1 text-red-500">Revoke</button>
+            </div>
+            <p class="text-xs text-zinc-400 mt-2">API Key แสดงเต็มเฉพาะตอนสร้าง — ใช้ Regenerate เพื่อสร้างใหม่ (key เก่าจะถูก revoke ทันที)</p>
+          </div>
+          <!-- Rate Limit -->
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">Rate Limit</h3>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div class="flex items-center gap-2 text-yellow-800 mb-2"><span class="status-dot bg-yellow-500"></span><span class="font-medium">Sandbox Mode</span></div>
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><span class="text-zinc-500">Daily limit:</span> <strong>30 requests/day</strong></div>
+                <div><span class="text-zinc-500">Max payload:</span> <strong>1 MB</strong></div>
+              </div>
+              <p class="text-xs text-yellow-700 mt-2">Submit for Production เพื่อปลดล็อค rate limit (1,000+ req/min)</p>
+            </div>
+          </div>
+          <!-- Submit for Production CTA -->
+          <div class="card p-5 border-blue-200 bg-blue-50/30">
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-semibold mb-1">พร้อมใช้งานจริงแล้ว?</h3>
+                <p class="text-sm text-zinc-500 mb-3">Submit for Production เพื่อรับ production API key และ rate limit ที่สูงขึ้น (ใช้เวลา review ไม่เกิน 48 ชั่วโมง)</p>
+                <button class="btn btn-primary text-sm" onclick="showSection('sec-submit-production')">Submit for Production Approval</button>
+              </div>
+            </div>
+          </div>
+          <!-- Danger Zone -->
+          <div class="card p-5 border-red-200">
+            <h3 class="font-semibold text-red-600 mb-3">Danger Zone</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between p-3 border border-zinc-200 rounded-lg">
+                <div>
+                  <p class="text-sm font-medium">Revoke App</p>
+                  <p class="text-xs text-zinc-400">ปิดการใช้งาน App ชั่วคราว — API Key จะหยุดทำงานทันที แต่สามารถเปิดใหม่ได้</p>
+                </div>
+                <button class="btn btn-outline text-xs py-1 text-orange-600 border-orange-300 hover:bg-orange-50">Revoke</button>
+              </div>
+              <div class="flex items-center justify-between p-3 border border-red-200 rounded-lg">
+                <div>
+                  <p class="text-sm font-medium">Delete App</p>
+                  <p class="text-xs text-zinc-400">ลบ App ถาวร — API Key จะถูก revoke ทันทีและไม่สามารถกู้คืนได้</p>
+                </div>
+                <button class="btn btn-danger text-xs py-1">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== APP DETAIL — REJECTED STATE ===== -->
+      <section id="sec-app-detail-rejected" class="hidden fade-in">
+        <div class="border-b border-zinc-200 px-6 h-14 flex items-center gap-3">
+          <button class="btn btn-ghost text-xs p-1" onclick="showSection('sec-apps')">← Back</button>
+          <h1 class="text-lg font-semibold">Chatbot Integration</h1>
+          <span class="badge bg-red-50 text-red-700 ml-2">Rejected</span>
+        </div>
+        <div class="p-6 max-w-3xl space-y-6">
+          <!-- Rejection Alert -->
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="flex items-center gap-2 text-red-800 mb-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span class="font-medium">Production Approval Rejected</span>
+            </div>
+            <div class="bg-white border border-red-100 rounded-lg p-3 mt-2">
+              <p class="text-sm font-medium text-zinc-700 mb-1">Rejection Reason:</p>
+              <p class="text-sm text-zinc-600">"เอกสารจดทะเบียนบริษัทไม่ชัดเจน และ use case description ไม่ระบุรายละเอียดเพียงพอว่าจะใช้ API กับข้อมูลประเภทใด กรุณาอัปโหลดเอกสารใหม่และอธิบายเพิ่มเติม"</p>
+            </div>
+            <p class="text-xs text-red-600 mt-2">Rejected by Platform Admin on 12 Mar 2026, 16:00</p>
+          </div>
+          <!-- App Info -->
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">App Information</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div><label class="block text-sm font-medium mb-1.5">App Name</label><input type="text" class="input" value="Chatbot Integration"></div>
+              <div><label class="block text-sm font-medium mb-1.5">Created</label><input type="text" class="input" value="5 Mar 2026" disabled></div>
+            </div>
+            <div class="mt-4"><label class="block text-sm font-medium mb-1.5">Description</label><textarea class="input" rows="2">Chatbot สำหรับ customer service</textarea></div>
+            <button class="btn btn-outline mt-3 text-sm">Save Changes</button>
+          </div>
+          <!-- API Key -->
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">API Key</h3>
+            <div class="flex items-center gap-3 bg-zinc-50 rounded-lg px-4 py-3">
+              <code class="text-sm font-mono flex-1">rf-sk-sandbox-••••••••••••2c4e</code>
+              <button class="btn btn-outline text-xs py-1">Regenerate</button>
+              <button class="btn btn-ghost text-xs py-1 text-red-500">Revoke</button>
+            </div>
+            <p class="text-xs text-zinc-400 mt-2">App ยังคงใช้งานได้ในโหมด Sandbox ระหว่างรอแก้ไขและ resubmit</p>
+          </div>
+          <!-- Resubmit CTA -->
+          <div class="card p-5 border-orange-200 bg-orange-50/30">
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-semibold mb-1">แก้ไขและ Resubmit</h3>
+                <p class="text-sm text-zinc-500 mb-3">อ่าน rejection reason ด้านบน แก้ไขข้อมูลและเอกสาร แล้ว submit ใหม่ได้ไม่จำกัดจำนวนครั้ง</p>
+                <button class="btn btn-primary text-sm" onclick="showSection('sec-submit-production')">Revise and Resubmit</button>
+              </div>
+            </div>
+          </div>
+          <!-- Approval Timeline -->
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">Approval Timeline</h3>
+            <div class="space-y-4 ml-1">
+              <div class="flex items-start gap-3">
+                <div class="timeline-dot bg-red-500 border-red-500 mt-1"></div>
+                <div><p class="text-sm font-medium">Rejected</p><p class="text-xs text-zinc-400">12 Mar 2026, 16:00 — by Platform Admin</p><p class="text-xs text-red-500 mt-1">"เอกสารจดทะเบียนบริษัทไม่ชัดเจน..."</p></div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="timeline-dot bg-orange-500 border-orange-500 mt-1"></div>
+                <div><p class="text-sm font-medium">Submitted for Production (#1)</p><p class="text-xs text-zinc-400">10 Mar 2026, 14:30</p></div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="timeline-dot bg-yellow-500 border-yellow-500 mt-1"></div>
+                <div><p class="text-sm font-medium">Created (Sandbox)</p><p class="text-xs text-zinc-400">5 Mar 2026, 10:00</p></div>
+              </div>
+            </div>
+          </div>
+          <!-- Danger Zone -->
+          <div class="card p-5 border-red-200">
+            <h3 class="font-semibold text-red-600 mb-3">Danger Zone</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between p-3 border border-zinc-200 rounded-lg">
+                <div>
+                  <p class="text-sm font-medium">Revoke App</p>
+                  <p class="text-xs text-zinc-400">ปิดการใช้งาน App ชั่วคราว — API Key จะหยุดทำงานทันที แต่สามารถเปิดใหม่ได้</p>
+                </div>
+                <button class="btn btn-outline text-xs py-1 text-orange-600 border-orange-300 hover:bg-orange-50">Revoke</button>
+              </div>
+              <div class="flex items-center justify-between p-3 border border-red-200 rounded-lg">
+                <div>
+                  <p class="text-sm font-medium">Delete App</p>
+                  <p class="text-xs text-zinc-400">ลบ App ถาวร — API Key จะถูก revoke ทันทีและไม่สามารถกู้คืนได้</p>
+                </div>
+                <button class="btn btn-danger text-xs py-1">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== APP DETAIL ===== -->
+      <section id="sec-app-detail" class="hidden fade-in">
+        <div class="border-b border-zinc-200 px-6 h-14 flex items-center gap-3">
+          <button class="btn btn-ghost text-xs p-1" onclick="showSection('sec-apps')">← Back</button>
+          <h1 class="text-lg font-semibold">Document Summarizer App</h1>
+          <span class="badge bg-green-50 text-green-700 ml-2">Approved</span>
+        </div>
+        <div class="p-6 max-w-3xl space-y-6">
+          <!-- App Info -->
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">App Information</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div><label class="block text-sm font-medium mb-1.5">App Name</label><input type="text" class="input" value="Document Summarizer App"></div>
+              <div><label class="block text-sm font-medium mb-1.5">Created</label><input type="text" class="input" value="12 Mar 2026" disabled></div>
+            </div>
+            <div class="mt-4"><label class="block text-sm font-medium mb-1.5">Description</label><textarea class="input" rows="2">สรุปเอกสารด้วย AI</textarea></div>
+            <button class="btn btn-outline mt-3 text-sm">Save Changes</button>
+          </div>
+          <!-- API Key -->
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">API Key</h3>
+            <div class="flex items-center gap-3 bg-zinc-50 rounded-lg px-4 py-3">
+              <code class="text-sm font-mono flex-1">rf-sk-prod-••••••••••••8f6a</code>
+              <button class="btn btn-outline text-xs py-1">Regenerate</button>
+              <button class="btn btn-ghost text-xs py-1 text-red-500">Revoke</button>
+            </div>
+            <p class="text-xs text-zinc-400 mt-2">API Key แสดงเต็มเฉพาะตอนสร้าง — ใช้ Regenerate เพื่อสร้างใหม่ (key เก่าจะถูก revoke ทันที)</p>
+          </div>
+          <!-- Rate Limit -->
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">Rate Limit</h3>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div class="flex items-center gap-2 text-green-800 mb-2"><span class="status-dot bg-green-500"></span><span class="font-medium">Production Mode</span></div>
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><span class="text-zinc-500">Rate limit:</span> <strong>1,000 requests/min</strong></div>
+                <div><span class="text-zinc-500">Max payload:</span> <strong>10 MB</strong></div>
+              </div>
+            </div>
+          </div>
+          <!-- Approval Status -->
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">Approval Status</h3>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <div class="flex items-center gap-2 text-green-800"><span class="status-dot bg-green-500"></span><span class="font-medium">Production Access Enabled</span></div>
+              <p class="text-sm text-green-700 mt-1">Approved by Platform Admin on 13 Mar 2026</p>
+            </div>
+            <!-- Approval Timeline -->
+            <h4 class="text-sm font-medium mb-3">Timeline</h4>
+            <div class="space-y-4 ml-1">
+              <div class="flex items-start gap-3">
+                <div class="timeline-dot bg-green-500 border-green-500 mt-1"></div>
+                <div><p class="text-sm font-medium">Approved</p><p class="text-xs text-zinc-400">13 Mar 2026, 09:15 — by Platform Admin</p></div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="timeline-dot bg-orange-500 border-orange-500 mt-1"></div>
+                <div><p class="text-sm font-medium">Submitted for Production</p><p class="text-xs text-zinc-400">11 Mar 2026, 14:30</p></div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="timeline-dot bg-yellow-500 border-yellow-500 mt-1"></div>
+                <div><p class="text-sm font-medium">Created (Sandbox)</p><p class="text-xs text-zinc-400">12 Mar 2026, 10:00</p></div>
+              </div>
+            </div>
+          </div>
+          <!-- Danger Zone -->
+          <div class="card p-5 border-red-200">
+            <h3 class="font-semibold text-red-600 mb-3">Danger Zone</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between p-3 border border-zinc-200 rounded-lg">
+                <div>
+                  <p class="text-sm font-medium">Revoke App</p>
+                  <p class="text-xs text-zinc-400">ปิดการใช้งาน App ชั่วคราว — API Key จะหยุดทำงานทันที แต่สามารถเปิดใหม่ได้</p>
+                </div>
+                <button class="btn btn-outline text-xs py-1 text-orange-600 border-orange-300 hover:bg-orange-50">Revoke</button>
+              </div>
+              <div class="flex items-center justify-between p-3 border border-red-200 rounded-lg">
+                <div>
+                  <p class="text-sm font-medium">Delete App</p>
+                  <p class="text-xs text-zinc-400">ลบ App ถาวร — API Key จะถูก revoke ทันทีและไม่สามารถกู้คืนได้</p>
+                </div>
+                <button class="btn btn-danger text-xs py-1">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== API KEYS ===== -->
+      <section id="sec-apikeys" class="hidden fade-in">
+        <div class="border-b border-zinc-200 px-6 h-14 flex items-center"><h1 class="text-lg font-semibold">API Keys</h1></div>
+        <div class="p-6 space-y-6">
+          <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm flex items-start gap-2">
+            <span>🔒</span><p>API Keys จะแสดง <strong>เฉพาะตอนสร้างครั้งแรก</strong> เท่านั้น กรุณาเก็บรักษาไว้อย่างปลอดภัย หากทำหายต้อง Regenerate ใหม่</p>
+          </div>
+          <div class="card">
+            <table class="w-full">
+              <thead><tr class="border-b border-zinc-200">
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">App</th>
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">Key</th>
+                <th class="text-left text-xs font-medium text-zinc-400 px-5 py-3">Status</th>
+                <th class="text-right text-xs font-medium text-zinc-400 px-5 py-3">Actions</th>
+              </tr></thead>
+              <tbody>
+                <tr class="table-row border-b border-zinc-50"><td class="px-5 py-3 text-sm font-medium">Document Summarizer App</td><td class="px-5 py-3 text-sm font-mono text-zinc-500">rf-sk-prod-...8f6a</td><td class="px-5 py-3"><span class="badge bg-green-50 text-green-700">Active (Production)</span></td><td class="px-5 py-3 text-right"><button class="btn btn-outline text-xs py-1 mr-1">Regenerate</button><button class="btn btn-ghost text-xs py-1 text-red-500">Revoke</button></td></tr>
+                <tr class="table-row border-b border-zinc-50"><td class="px-5 py-3 text-sm font-medium">Chatbot Integration</td><td class="px-5 py-3 text-sm font-mono text-zinc-500">rf-sk-sandbox-...2c4e</td><td class="px-5 py-3"><span class="badge bg-yellow-50 text-yellow-700">Active (Sandbox)</span></td><td class="px-5 py-3 text-right"><button class="btn btn-outline text-xs py-1 mr-1">Regenerate</button><button class="btn btn-ghost text-xs py-1 text-red-500">Revoke</button></td></tr>
+                <tr class="table-row border-b border-zinc-50"><td class="px-5 py-3 text-sm font-medium">My Test App</td><td class="px-5 py-3 text-sm font-mono text-zinc-500">rf-sk-sandbox-...abc1</td><td class="px-5 py-3"><span class="badge bg-yellow-50 text-yellow-700">Active (Sandbox)</span></td><td class="px-5 py-3 text-right"><button class="btn btn-outline text-xs py-1 mr-1">Regenerate</button><button class="btn btn-ghost text-xs py-1 text-red-500">Revoke</button></td></tr>
+                <tr class="table-row"><td class="px-5 py-3 text-sm font-medium text-zinc-400">Payment Gateway</td><td class="px-5 py-3 text-sm font-mono text-zinc-300 line-through">rf-sk-prod-...9d3f</td><td class="px-5 py-3"><span class="badge bg-zinc-100 text-zinc-500">Revoked</span></td><td class="px-5 py-3 text-right"><button class="btn btn-outline text-xs py-1 text-green-600 border-green-300">Re-activate</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== API DOCUMENTATION ===== -->
+      <section id="sec-api-docs" class="hidden fade-in">
+        <div class="border-b border-zinc-200 px-6 h-14 flex items-center justify-between">
+          <h1 class="text-lg font-semibold">API Documentation</h1>
+          <button class="btn btn-primary text-sm">Open Full API Docs ↗</button>
+        </div>
+        <div class="p-6 space-y-6">
+          <div class="card p-5 bg-zinc-50">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 bg-zinc-900 rounded-lg flex items-center justify-center text-white text-sm font-bold">S</div>
+              <div>
+                <h3 class="font-semibold">Powered by Scalar</h3>
+                <p class="text-sm text-zinc-500 mt-1">Interactive API docs auto-generated จาก OpenAPI 3.0+ spec — Try it out, code snippets, dark mode, search (⌘K)</p>
+              </div>
+            </div>
+          </div>
+          <div class="card p-5">
+            <h3 class="font-semibold mb-3">Authentication Guide</h3>
+            <p class="text-sm text-zinc-500 mb-3">ใช้ API Key เป็น Bearer token ในทุก request:</p>
+            <div class="bg-zinc-950 rounded-lg px-4 py-3">
+              <code class="text-sm text-green-400">Authorization: Bearer rf-sk-prod-your-api-key-here</code>
+            </div>
+          </div>
+          <h3 class="font-semibold">Available API Categories</h3>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="card p-5 hover:shadow-md transition-shadow cursor-pointer">
+              <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 mb-3">📄</div>
+              <h4 class="font-semibold mb-1">NLP APIs</h4>
+              <p class="text-sm text-zinc-500">Document Summarizer, Semantic Search, Text Classification</p>
+              <p class="text-xs text-zinc-400 mt-2">6 endpoints</p>
+            </div>
+            <div class="card p-5 hover:shadow-md transition-shadow cursor-pointer">
+              <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 mb-3">🤖</div>
+              <h4 class="font-semibold mb-1">Agent APIs</h4>
+              <p class="text-sm text-zinc-500">Chat Assistant, AI Avatar, Multi-turn Conversation</p>
+              <p class="text-xs text-zinc-400 mt-2">8 endpoints</p>
+            </div>
+            <div class="card p-5 hover:shadow-md transition-shadow cursor-pointer">
+              <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 mb-3">🎙️</div>
+              <h4 class="font-semibold mb-1">Audio APIs</h4>
+              <p class="text-sm text-zinc-500">Speech-to-Text, Text-to-Speech (Thai supported)</p>
+              <p class="text-xs text-zinc-400 mt-2">4 endpoints</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SUBMIT FOR PRODUCTION (3-Step) ===== -->
+      <section id="sec-submit-production" class="hidden fade-in">
+        <div class="border-b border-zinc-200 px-6 h-14 flex items-center gap-3">
+          <button class="btn btn-ghost text-xs p-1" onclick="showSection('sec-app-detail')">← Back</button>
+          <h1 class="text-lg font-semibold">Submit for Production Approval</h1>
+        </div>
+        <div class="p-6 max-w-2xl">
+          <!-- Step Indicator -->
+          <div class="flex items-center justify-center gap-2 mb-8">
+            <div class="flex items-center gap-2"><span id="step1-dot" class="w-8 h-8 rounded-full step-active flex items-center justify-center text-sm font-bold">1</span><span class="text-sm font-medium">Company Info</span></div>
+            <div class="w-12 h-px bg-zinc-300"></div>
+            <div class="flex items-center gap-2"><span id="step2-dot" class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold">2</span><span class="text-sm text-zinc-400">Documents</span></div>
+            <div class="w-12 h-px bg-zinc-300"></div>
+            <div class="flex items-center gap-2"><span id="step3-dot" class="w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold">3</span><span class="text-sm text-zinc-400">Review</span></div>
+          </div>
+          <!-- Step 1: Company Info -->
+          <div id="prod-step1" class="card p-5 space-y-4">
+            <div><label class="block text-sm font-medium mb-1.5">Company/Organization Name *</label><input type="text" class="input" placeholder="บริษัท ABC จำกัด" value="SmartDev Co., Ltd."></div>
+            <div><label class="block text-sm font-medium mb-1.5">Business Registration Number</label><input type="text" class="input" placeholder="เลขทะเบียนนิติบุคคล (optional)" value="0105565012345"></div>
+            <div><label class="block text-sm font-medium mb-1.5">Business Address *</label><textarea class="input" rows="2" placeholder="ที่อยู่บริษัท (min 10 chars)">123 Sukhumvit Rd, Klongtoey, Bangkok 10110</textarea></div>
+            <div><label class="block text-sm font-medium mb-1.5">Use Case Description *</label><textarea class="input" rows="4" placeholder="อธิบายว่าจะใช้ API ทำอะไร (min 50 chars, max 1,000 chars)">We plan to integrate the Document Summarizer API into our enterprise document management system to automatically generate summaries for uploaded documents.</textarea><p class="text-xs text-zinc-400 mt-1">152/1,000 characters</p></div>
+            <div class="flex justify-end"><button class="btn btn-primary" onclick="goStep(2)">Next: Upload Documents →</button></div>
+          </div>
+          <!-- Step 2: Documents -->
+          <div id="prod-step2" class="hidden card p-5 space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Upload Supporting Documents *</label>
+              <p class="text-xs text-zinc-400 mb-3">เอกสารจดทะเบียนบริษัท, หนังสือรับรอง, ฯลฯ (1-5 files, PDF/JPG/PNG, max 10MB each)</p>
+              <div class="border-2 border-dashed border-zinc-300 rounded-lg p-8 text-center">
+                <svg class="w-8 h-8 text-zinc-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <p class="text-sm text-zinc-500">ลากไฟล์มาวาง หรือ <span class="text-blue-600 cursor-pointer">เลือกไฟล์</span></p>
+              </div>
+            </div>
+            <div class="bg-zinc-50 rounded-lg p-3 flex items-center justify-between">
+              <div class="flex items-center gap-2"><span>📄</span><span class="text-sm">business_registration.pdf</span><span class="text-xs text-zinc-400">2.4 MB</span></div>
+              <button class="text-red-500 text-xs hover:underline">Remove</button>
+            </div>
+            <div class="flex justify-between"><button class="btn btn-outline" onclick="goStep(1)">← Back</button><button class="btn btn-primary" onclick="goStep(3)">Next: Review →</button></div>
+          </div>
+          <!-- Step 3: Review -->
+          <div id="prod-step3" class="hidden card p-5 space-y-4">
+            <h3 class="font-semibold">Review Your Submission</h3>
+            <div class="bg-zinc-50 rounded-lg p-4 space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-zinc-500">Company</span><span class="font-medium">SmartDev Co., Ltd.</span></div>
+              <div class="flex justify-between"><span class="text-zinc-500">Registration No.</span><span class="font-medium">0105565012345</span></div>
+              <div class="flex justify-between"><span class="text-zinc-500">Address</span><span class="font-medium">123 Sukhumvit Rd, Bangkok 10110</span></div>
+              <div><span class="text-zinc-500">Use Case:</span><p class="mt-1">We plan to integrate the Document Summarizer API into our enterprise document management system...</p></div>
+              <div class="flex justify-between"><span class="text-zinc-500">Documents</span><span class="font-medium">1 file (business_registration.pdf — 2.4 MB)</span></div>
+            </div>
+            <label class="flex items-start gap-2 text-sm bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <input type="checkbox" class="mt-0.5"><span>I confirm all information is accurate and I agree to the terms</span>
+            </label>
+            <div class="flex justify-between"><button class="btn btn-outline" onclick="goStep(2)">← Back</button><button class="btn btn-primary">Submit for Approval</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PROFILE ===== -->
+      <section id="sec-profile" class="hidden fade-in">
+        <div class="border-b border-zinc-200 px-6 h-14 flex items-center"><h1 class="text-lg font-semibold">Profile</h1></div>
+        <div class="p-6 max-w-2xl space-y-6">
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">Account Information</h3>
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div><label class="block text-sm font-medium mb-1.5">First Name</label><input type="text" class="input" value="ก้อง"></div>
+                <div><label class="block text-sm font-medium mb-1.5">Last Name</label><input type="text" class="input" value="สมาร์ท"></div>
+              </div>
+              <div><label class="block text-sm font-medium mb-1.5">Email</label><div class="flex items-center gap-2"><input type="email" class="input" value="kong@startup.io" disabled><span class="badge bg-green-50 text-green-700 whitespace-nowrap">Verified</span></div></div>
+              <div><label class="block text-sm font-medium mb-1.5">Company</label><input type="text" class="input" value="SmartDev Co., Ltd."></div>
+              <button class="btn btn-primary">Save Changes</button>
+            </div>
+          </div>
+          <div class="card p-5">
+            <h3 class="font-semibold mb-4">Change Password</h3>
+            <div class="space-y-4">
+              <div><label class="block text-sm font-medium mb-1.5">Current Password</label><input type="password" class="input" placeholder="••••••••"></div>
+              <div><label class="block text-sm font-medium mb-1.5">New Password</label><input type="password" class="input" placeholder="อย่างน้อย 8 ตัวอักษร"></div>
+              <div><label class="block text-sm font-medium mb-1.5">Confirm New Password</label><input type="password" class="input" placeholder="••••••••"></div>
+              <button class="btn btn-primary">Update Password</button>
+            </div>
+          </div>
+          <div class="card p-5 border-red-200">
+            <h3 class="font-semibold text-red-600 mb-2">Danger Zone</h3>
+            <p class="text-sm text-zinc-500 mb-4">ลบบัญชีจะทำให้ Apps และ API Keys ทั้งหมดถูกลบถาวร ไม่สามารถกู้คืนได้</p>
+            <button class="btn btn-danger text-sm">Delete Account</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ==================== JAVASCRIPT ==================== -->
+  <script>
+    function showPage(pageId) {
+      document.querySelectorAll('[id^="page-"]').forEach(el => el.classList.add('hidden'));
+      const page = document.getElementById(pageId);
+      if (page) {
+        page.classList.remove('hidden');
+        if (pageId === 'page-dashboard') showSection('sec-dashboard');
+      }
+    }
+
+    function showSection(sectionId) {
+      document.querySelectorAll('[id^="page-"]').forEach(el => el.classList.add('hidden'));
+      document.getElementById('page-dashboard').classList.remove('hidden');
+      document.querySelectorAll('[id^="sec-"]').forEach(el => el.classList.add('hidden'));
+      const section = document.getElementById(sectionId);
+      if (section) section.classList.remove('hidden');
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.section === sectionId) item.classList.add('active');
+      });
+    }
+
+    function showApiKeyModal() {
+      showSection('sec-apikey-reveal');
+    }
+
+    function goStep(step) {
+      document.getElementById('prod-step1').classList.add('hidden');
+      document.getElementById('prod-step2').classList.add('hidden');
+      document.getElementById('prod-step3').classList.add('hidden');
+      document.getElementById('prod-step' + step).classList.remove('hidden');
+      for (var i = 1; i <= 3; i++) {
+        var dot = document.getElementById('step' + i + '-dot');
+        if (i < step) dot.className = 'w-8 h-8 rounded-full step-done flex items-center justify-center text-sm font-bold';
+        else if (i === step) dot.className = 'w-8 h-8 rounded-full step-active flex items-center justify-center text-sm font-bold';
+        else dot.className = 'w-8 h-8 rounded-full step-pending flex items-center justify-center text-sm font-bold';
+      }
+    }
+
+    function doLogout() {
+      if (window.Auth && Auth.isAuthenticated()) { Auth.logout(); return; }
+      showPage('page-landing');
+    }
+
+    if (window._boAuthReady) {
+      showPage('page-dashboard');
+      showSection('sec-dashboard');
+      if (window._boUser) {
+        var el = document.querySelector('.w-8.h-8.bg-zinc-200');
+        if (el) el.textContent = window._boUser.initials;
+      }
+    }
+  </script>
+
+</body>
+</html>

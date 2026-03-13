@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RealfactAvatar — User App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root {
+    --primary: #f15b26;
+    --primary-dim: rgba(241,91,38,0.15);
+    --primary-glow: rgba(241,91,38,0.35);
+    --bg: #0a0b0d;
+    --surface: #111318;
+    --surface2: #181b22;
+    --border: rgba(255,255,255,0.07);
+    --border-accent: rgba(241,91,38,0.3);
+    --text: #eef0f5;
+    --text-muted: #9ca3af;
+    --text-dim: #6b7280;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --font-heading: 'Bebas Neue', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+    --font-body: 'Noto Sans Thai', sans-serif;
+    --sw: 68px;
+    --sw-open: 210px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.4}
+  body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(241,91,38,.12) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+  /* ===== LAYOUT ===== */
+  .app-shell{display:flex;min-height:100vh;position:relative;z-index:1}
+
+  /* ===== SIDEBAR ===== */
+  .sidebar{
+    width:var(--sw);background:var(--surface);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;align-items:center;padding:16px 0;
+    position:fixed;top:0;left:0;height:100vh;z-index:100;
+    transition:width .3s cubic-bezier(.4,0,.2,1);overflow:hidden;
+  }
+  .sidebar:not(.locked):hover{width:var(--sw-open)}
+  .sidebar.locked{width:var(--sw-open)}
+  .main{margin-left:var(--sw);transition:margin-left .3s cubic-bezier(.4,0,.2,1);flex:1;display:flex;flex-direction:column}
+  .main.sb-locked{margin-left:var(--sw-open)}
+
+  .sidebar-logo{width:36px;height:36px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:6px;position:relative}
+  .sidebar-logo::after{content:'';position:absolute;inset:-3px;border-radius:11px;border:1px solid var(--primary-glow);animation:pulse-border 2s ease-in-out infinite}
+  @keyframes pulse-border{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+  .sidebar-logo svg{width:20px;height:20px;fill:white}
+
+  .sidebar-brand{font-family:var(--font-heading);font-size:12px;letter-spacing:1.5px;color:var(--text-muted);white-space:nowrap;opacity:0;transition:opacity .2s .05s;margin-bottom:18px;padding:0 12px;width:100%;text-align:center}
+  .sidebar.locked .sidebar-brand,.sidebar:not(.locked):hover .sidebar-brand{opacity:1}
+
+  .nav-item{width:100%;display:flex;align-items:center;gap:14px;padding:11px 16px;cursor:pointer;border:none;background:none;color:var(--text-muted);transition:all .2s;border-left:2px solid transparent;text-align:left;font-family:var(--font-body);font-size:13px;white-space:nowrap}
+  .nav-item:hover{color:var(--text);background:rgba(255,255,255,.04)}
+  .nav-item.active{color:var(--primary);border-left-color:var(--primary);background:var(--primary-dim)}
+  .nav-item svg{width:18px;height:18px;flex-shrink:0}
+  .nav-label{opacity:0;transition:opacity .15s .08s}
+  .sidebar.locked .nav-label,.sidebar:not(.locked):hover .nav-label{opacity:1}
+
+  .sidebar-bottom{margin-top:auto;width:100%}
+  .nav-divider{height:1px;background:var(--border);margin:8px 12px}
+
+  .lock-btn{width:100%;display:flex;align-items:center;gap:14px;padding:11px 16px;cursor:pointer;border:none;background:none;color:var(--text-muted);font-family:var(--font-body);font-size:12px;white-space:nowrap;transition:all .2s}
+  .lock-btn:hover{color:var(--text-muted);background:rgba(255,255,255,.03)}
+  .lock-btn.is-locked{color:var(--primary)}
+  .lock-btn svg{width:16px;height:16px;flex-shrink:0}
+  .lock-label{opacity:0;transition:opacity .15s .08s}
+  .sidebar.locked .lock-label,.sidebar:not(.locked):hover .lock-label{opacity:1}
+
+  /* ===== TOPBAR ===== */
+  .topbar{height:60px;background:rgba(17,19,24,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:50}
+  .topbar-title{font-family:var(--font-heading);font-size:22px;letter-spacing:2px}
+  .topbar-title span{color:var(--primary)}
+  .topbar-page{font-size:12px;color:var(--text-muted)}
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .wallet-chip{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border-accent);border-radius:20px;padding:6px 14px;font-size:13px;cursor:pointer;transition:all .2s}
+  .wallet-chip:hover{border-color:var(--primary);background:var(--primary-dim)}
+  .wallet-chip .ti{color:var(--primary);font-size:16px}
+  .wallet-chip .ta{font-family:var(--font-mono);font-weight:700;color:var(--primary)}
+  .wallet-chip .tl{color:var(--text-muted);font-size:12px}
+  .alert-badge{width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:all .2s}
+  .alert-badge:hover{border-color:var(--primary)}
+  .alert-badge .dot{width:7px;height:7px;background:var(--primary);border-radius:50%;position:absolute;top:6px;right:6px;animation:blink 1.5s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .user-av{width:36px;height:36px;background:linear-gradient(135deg,var(--primary),#ff8c5a);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;font-weight:700;color:white;cursor:pointer}
+
+  /* ===== CONTENT ===== */
+  .content{padding:28px;flex:1}
+  .page{display:none}
+  .page.active{display:block;animation:fadeIn .3s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ===== COMMON ===== */
+  .section-header{margin-bottom:24px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+  .section-title{font-family:var(--font-heading);font-size:32px;letter-spacing:3px;line-height:1}
+  .section-title .accent{color:var(--primary)}
+  .section-sub{font-size:13px;color:var(--text-muted);margin-top:6px}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
+  .card-accent{background:var(--surface);border:1px solid var(--border-accent);border-radius:14px;padding:20px;position:relative;overflow:hidden}
+  .card-accent::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--primary),transparent)}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+  .stat-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px}
+  .stat-value{font-family:var(--font-mono);font-size:28px;font-weight:700;line-height:1}
+  .stat-value.primary{color:var(--primary)}
+  .stat-sub{font-size:12px;color:var(--text-muted)}
+  .stat-icon{font-size:20px;margin-bottom:2px}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:var(--font-body);transition:all .2s}
+  .btn-primary{background:var(--primary);color:white;box-shadow:0 4px 16px rgba(241,91,38,.3)}
+  .btn-primary:hover{background:#d94f1e;transform:translateY(-1px);box-shadow:0 6px 20px rgba(241,91,38,.4)}
+  .btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+  .btn-outline:hover{border-color:var(--text-muted)}
+  .btn-lg{padding:14px 28px;font-size:15px;border-radius:12px}
+  .btn-sm{padding:6px 14px;font-size:12px;border-radius:8px}
+
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+  .chip-orange{background:var(--primary-dim);color:var(--primary);border:1px solid var(--border-accent)}
+  .chip-green{background:rgba(34,197,94,.1);color:var(--success);border:1px solid rgba(34,197,94,.2)}
+  .chip-red{background:rgba(239,68,68,.1);color:var(--error);border:1px solid rgba(239,68,68,.2)}
+  .chip-gray{background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)}
+  .chip-yellow{background:rgba(245,158,11,.1);color:var(--warning);border:1px solid rgba(245,158,11,.2)}
+
+  .status-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px;border-radius:20px;font-weight:500}
+  .status-badge.online{background:rgba(34,197,94,.12);color:var(--success)}
+  .status-badge.offline{background:rgba(75,85,99,.2);color:var(--text-muted)}
+  .status-badge.session{background:rgba(241,91,38,.12);color:var(--primary)}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .status-badge.online .status-dot,.status-badge.session .status-dot{animation:blink 1.2s ease-in-out infinite}
+
+  .tab-bar{display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:12px;width:fit-content;margin-bottom:24px}
+  .tab-btn{padding:8px 18px;border-radius:9px;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--text-muted);font-family:var(--font-body);transition:all .2s}
+  .tab-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+
+  .table-wrap{border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  thead{background:var(--surface2)}
+  th{padding:11px 14px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:500;border-bottom:1px solid var(--border)}
+  td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(255,255,255,.02)}
+
+  .amount-pos{color:var(--success);font-family:var(--font-mono);font-size:13px}
+  .amount-neg{color:var(--error);font-family:var(--font-mono);font-size:13px}
+
+  .form-label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  .form-input{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:var(--font-body);transition:border-color .2s;outline:none}
+  .form-input:focus{border-color:var(--primary)}
+
+  .divider{height:1px;background:var(--border);margin:16px 0}
+  .text-mono{font-family:var(--font-mono)}
+  .text-muted{color:var(--text-muted)}
+  .text-primary{color:var(--primary)}
+  .text-success{color:var(--success)}
+  .text-sm{font-size:12px}
+  .font-600{font-weight:600}
+  .flex{display:flex}
+  .items-center{align-items:center}
+  .justify-between{justify-content:space-between}
+  .gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+  .mb-4{margin-bottom:4px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}
+  .mb-10{margin-bottom:10px}.mb-14{margin-bottom:14px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}.mb-24{margin-bottom:24px}
+
+  /* ===== BANNERS ===== */
+  .alert-banner{display:flex;align-items:center;gap:12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:13px 18px;margin-bottom:20px}
+  .alert-banner .ai{font-size:20px}
+  .alert-banner .at{font-size:13px;flex:1}
+  .alert-banner .at strong{color:var(--warning)}
+  .demo-banner{background:linear-gradient(135deg,rgba(241,91,38,.1),rgba(241,91,38,.04));border:1px solid var(--border-accent);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:24px}
+  .demo-banner-icon{font-size:28px}
+  .demo-banner-text h4{font-size:14px;font-weight:600;margin-bottom:3px}
+  .demo-banner-text p{font-size:12px;color:var(--text-muted)}
+  .demo-banner-amt{margin-left:auto;text-align:right}
+  .demo-banner-amt .amount{font-family:var(--font-mono);font-size:24px;font-weight:700;color:var(--primary)}
+  .demo-banner-amt .label{font-size:12px;color:var(--text-muted)}
+
+  /* ===== DEVICE CARDS ===== */
+  .device-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:all .25s;position:relative}
+  .device-card:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 8px 32px rgba(241,91,38,.15)}
+  .device-card.selected{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary),0 8px 32px rgba(241,91,38,.2)}
+  .device-card.offline{opacity:.55;cursor:default}
+  .device-card.offline:hover{transform:none;box-shadow:none;border-color:var(--border)}
+  .device-card-header{padding:16px;display:flex;align-items:flex-start;gap:12px}
+  .device-thumb{width:52px;height:80px;background:var(--surface2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;position:relative;overflow:hidden}
+  .device-thumb.active-t{background:var(--primary-dim);border:1px solid var(--border-accent)}
+  .device-thumb .scan{position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(241,91,38,.15) 100%);animation:scan 2.5s ease-in-out infinite}
+  @keyframes scan{0%,100%{transform:translateY(100%)}50%{transform:translateY(-100%)}}
+  .device-info{flex:1}
+  .device-name{font-weight:600;font-size:14px;margin-bottom:2px}
+  .device-model{font-size:12px;color:var(--text-muted)}
+  .device-loc{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .device-card-footer{padding:11px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.015)}
+  .session-count-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted)}
+  .session-count-badge .scn{font-family:var(--font-mono);font-weight:700;color:var(--primary);font-size:13px}
+
+  /* ===== SESSION PANEL ===== */
+  .session-panel{background:var(--surface);border:1px solid var(--border-accent);border-radius:16px;padding:24px;position:relative;overflow:hidden}
+  .session-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--primary),#ff8c5a,transparent)}
+  .live-indicator{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--primary);font-family:var(--font-mono);margin-bottom:14px}
+  .live-dot{width:8px;height:8px;background:var(--primary);border-radius:50%;animation:blink .8s ease-in-out infinite}
+  .session-timer{font-family:var(--font-heading);font-size:72px;letter-spacing:4px;line-height:1;margin-bottom:6px}
+  .session-timer span{color:var(--primary)}
+  .timer-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:18px}
+  .timer-fill{height:100%;background:linear-gradient(90deg,var(--primary),#ff8c5a);border-radius:2px;width:0%;transition:width .5s linear;position:relative}
+  .timer-fill::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);width:8px;height:8px;background:white;border-radius:50%;box-shadow:0 0 8px var(--primary)}
+  .session-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted);margin-bottom:6px}
+  .session-meta-row .val{color:var(--text);font-family:var(--font-mono)}
+
+  .session-trigger{width:100%;padding:16px;background:var(--primary);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;font-family:var(--font-body);cursor:pointer;transition:all .2s;box-shadow:0 6px 24px rgba(241,91,38,.3);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:10px}
+  .session-trigger::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 0%,rgba(255,255,255,.08) 100%)}
+  .session-trigger:hover{background:#d94f1e;transform:translateY(-1px);box-shadow:0 8px 28px rgba(241,91,38,.4)}
+  .session-trigger.stop{background:rgba(239,68,68,.85);box-shadow:0 6px 20px rgba(239,68,68,.3)}
+  .session-trigger.stop:hover{background:rgba(239,68,68,1)}
+
+  .standby-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px}
+  .standby-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+  .standby-row .sl{color:var(--text-muted)}
+  .standby-row .sv{font-family:var(--font-mono);color:var(--text)}
+
+  .today-strip{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .today-strip .ts-label{font-size:12px;color:var(--text-muted)}
+  .today-strip .ts-val{font-family:var(--font-mono);font-size:20px;color:var(--primary);font-weight:700}
+
+  .session-mini-log{display:flex;flex-direction:column;gap:6px}
+  .session-mini-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px}
+  .session-mini-row .sid{font-family:var(--font-mono);color:var(--primary);font-size:12px;flex-shrink:0}
+  .session-mini-row .stime{color:var(--text-muted);flex-shrink:0}
+  .session-mini-row .sdur{font-family:var(--font-mono);flex-shrink:0}
+  .session-mini-row .stok{color:var(--error);font-family:var(--font-mono);flex-shrink:0;margin-left:auto}
+
+  /* ===== AVATAR CARDS ===== */
+  .avatar-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:all .25s}
+  .avatar-card:hover{border-color:rgba(255,255,255,.15);transform:translateY(-2px)}
+  .avatar-card.selected{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+  .avatar-thumb{height:140px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:56px;position:relative;overflow:hidden}
+  .avatar-thumb::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,var(--surface))}
+  .suggested-badge{position:absolute;top:10px;right:10px;background:var(--primary);color:white;font-size:12px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase}
+  .avatar-body{padding:14px}
+  .avatar-name{font-weight:600;font-size:14px;margin-bottom:4px}
+  .avatar-meta{font-size:12px;color:var(--text-muted);display:flex;flex-direction:column;gap:3px}
+  .avatar-rate{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+  .rate-val{font-family:var(--font-mono);font-size:13px;color:var(--primary);font-weight:700}
+  .preview-btn{font-size:12px;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;transition:all .2s;font-family:var(--font-body)}
+  .preview-btn:hover{border-color:var(--primary);color:var(--primary)}
+  .avatar-meta > div{display:flex;align-items:center;gap:5px}
+  .avatar-meta i{width:13px;color:var(--primary);opacity:.75;flex-shrink:0}
+
+  /* ===== LOAD AVATAR MODAL ===== */
+  .lm-avatar-summary{background:var(--surface2);border:1px solid var(--border-accent);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:4px}
+  .lm-avatar-emoji{font-size:30px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:var(--surface);border-radius:10px;border:1px solid var(--border);flex-shrink:0}
+  .lm-avatar-name{font-weight:600;font-size:15px;margin-bottom:6px}
+  .lm-avatar-attrs{display:flex;flex-wrap:wrap;gap:5px 14px;font-size:12px;color:var(--text-muted)}
+  .lm-avatar-attrs i{color:var(--primary);opacity:.8;width:13px}
+  .lm-box-list{display:flex;flex-direction:column;gap:8px}
+  .lm-box-row{padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;transition:all .2s}
+  .lm-box-row:hover{border-color:var(--primary)}
+  .lm-box-row.selected{border-color:var(--primary);background:var(--primary-dim)}
+  .lm-box-radio{width:18px;height:18px;border:2px solid var(--border);border-radius:50%;position:relative;flex-shrink:0;margin-top:2px;transition:border-color .2s}
+  .lm-box-row.selected .lm-box-radio{border-color:var(--primary)}
+  .lm-box-row.selected .lm-box-radio::after{content:'';position:absolute;inset:3px;background:var(--primary);border-radius:50%}
+  .lm-box-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .lm-box-name{font-weight:600;font-size:14px}
+  .lm-box-details{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:12px;color:var(--text-muted)}
+  .lm-box-details i{width:13px;color:var(--primary);opacity:.75}
+
+  /* ===== SETTINGS PAGE ===== */
+  .settings-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:14px 0}
+  .settings-row:first-child{padding-top:0}
+  .settings-row:last-child{padding-bottom:0}
+  .settings-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+  .settings-value{font-size:14px;color:var(--text)}
+  .settings-field{display:flex;flex-direction:column}
+  .toggle-switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0}
+  .toggle-switch input{opacity:0;width:0;height:0}
+  .toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:24px;cursor:pointer;transition:.2s}
+  .toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+  .toggle-switch input:checked+.toggle-slider{background:var(--primary)}
+  .toggle-switch input:checked+.toggle-slider::before{transform:translateX(18px)}
+  .input-inline{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 10px;font-family:var(--font-mono);font-size:13px;outline:none}
+  .input-inline:focus{border-color:var(--primary)}
+
+  /* ===== PACKAGE CARDS ===== */
+  .package-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+  .package-card:hover{border-color:var(--primary);transform:translateY(-2px)}
+  .package-card.popular{border-color:var(--primary)}
+  .package-card.popular::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--primary),#ff8c5a)}
+  .popular-tag{position:absolute;top:16px;right:16px;background:var(--primary);color:white;font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
+  .pkg-tokens{font-family:var(--font-mono);font-size:36px;font-weight:700;color:var(--primary)}
+  .pkg-tokens-label{font-size:13px;color:var(--text-muted);margin-bottom:4px}
+  .pkg-bonus{font-size:13px;color:var(--success);margin-bottom:8px}
+  .pkg-duration{font-size:12px;color:var(--text-muted);margin-bottom:14px}
+  .pkg-price-block{border-top:1px solid var(--border);padding-top:12px;margin-top:4px}
+  .pkg-price-main{font-family:var(--font-mono);font-size:30px;font-weight:700;color:var(--text);line-height:1;margin-bottom:5px}
+  .pkg-price-note{font-size:12px;color:var(--text-muted)}
+  .pkg-buy-btn{display:block;width:100%;margin-top:12px;padding:9px 0;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;font-family:var(--font-body);cursor:pointer;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s;pointer-events:none}
+  .package-card:hover .pkg-buy-btn{opacity:1;transform:translateY(0);pointer-events:auto}
+  .package-card.popular .pkg-buy-btn{opacity:1;transform:translateY(0);pointer-events:auto}
+
+  /* ===== SECTION SEPARATOR ===== */
+  .section-sep{display:flex;align-items:center;gap:16px;margin:28px 0 24px}
+  .section-sep::before,.section-sep::after{content:'';flex:1;height:1px;background:var(--border)}
+  .section-sep span{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap}
+  .wallet-section-hd{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:500;display:flex;align-items:center;gap:6px;margin-bottom:14px}
+
+  /* ===== MODAL ===== */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+  .modal-overlay.open{display:flex;animation:fadeIn .2s ease}
+  .modal{background:var(--surface);border:1px solid var(--border-accent);border-radius:20px;padding:28px;width:100%;max-width:440px;position:relative}
+  .modal-title{font-family:var(--font-heading);font-size:26px;letter-spacing:2px;margin-bottom:4px}
+  .modal-sub{font-size:13px;color:var(--text-muted);margin-bottom:22px}
+  .modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:18px;line-height:1;transition:all .2s}
+  .modal-close:hover{border-color:var(--error);color:var(--error)}
+  .summary-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px}
+  .summary-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0}
+  .summary-row .sl{color:var(--text-muted)}
+  .summary-row .sv{font-family:var(--font-mono);color:var(--text)}
+  .summary-row.total{font-weight:600;font-size:15px;padding-top:10px;border-top:1px solid var(--border);margin-top:6px}
+  .summary-row.total .sv{color:var(--primary)}
+  .payment-methods{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+  .pay-method{padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .2s;font-size:14px}
+  .pay-method:hover{border-color:var(--primary)}
+  .pay-method.selected{border-color:var(--primary);background:var(--primary-dim)}
+  .pay-method-icon{font-size:22px;width:32px;text-align:center}
+  .pay-method-name{font-weight:500}
+  .pay-method-desc{font-size:12px;color:var(--text-muted)}
+  .pay-method-radio{margin-left:auto;width:18px;height:18px;border:2px solid var(--border);border-radius:50%;position:relative;flex-shrink:0}
+  .pay-method.selected .pay-method-radio{border-color:var(--primary)}
+  .pay-method.selected .pay-method-radio::after{content:'';position:absolute;inset:3px;background:var(--primary);border-radius:50%}
+
+  /* ===== RECEIPT ===== */
+  .receipt-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;max-width:400px}
+  .receipt-header{background:var(--primary);padding:20px;text-align:center}
+  .receipt-header .logo-text{font-family:var(--font-heading);font-size:22px;letter-spacing:4px;color:white}
+  .receipt-header .receipt-type{font-size:12px;color:rgba(255,255,255,.9);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+  .receipt-body{padding:20px}
+  .receipt-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dashed var(--border)}
+  .receipt-row:last-child{border-bottom:none}
+  .receipt-row .rl{color:var(--text-muted)}
+  .receipt-row .rv{color:var(--text);font-family:var(--font-mono)}
+  .receipt-total{background:var(--surface2);margin:16px -20px -20px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+  .receipt-total-label{font-weight:600}
+  .receipt-total-value{font-family:var(--font-mono);font-size:20px;color:var(--primary);font-weight:700}
+
+  /* ===== INVOICE ===== */
+  .inv-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;width:100%;max-width:600px}
+  .inv-head{padding:20px 24px;display:flex;justify-content:space-between;align-items:flex-start;background:var(--surface2);border-bottom:2px solid var(--primary)}
+  .inv-brand-name{font-family:var(--font-heading);font-size:22px;letter-spacing:3px;color:var(--primary);margin-bottom:6px}
+  .inv-brand-sub{font-size:12px;color:var(--text-muted);line-height:1.7}
+  .inv-doc-info{text-align:right}
+  .inv-doc-title{font-family:var(--font-heading);font-size:20px;letter-spacing:2px;color:var(--text)}
+  .inv-doc-num{font-family:var(--font-mono);font-size:13px;color:var(--primary);margin-top:4px}
+  .inv-doc-date{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .inv-parties{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
+  .inv-party{padding:14px 24px}
+  .inv-party+.inv-party{border-left:1px solid var(--border)}
+  .inv-party-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600}
+  .inv-party-name{font-weight:600;font-size:13px;margin-bottom:3px}
+  .inv-party-detail{font-size:12px;color:var(--text-muted);line-height:1.7}
+  .inv-items{width:100%;border-collapse:collapse}
+  .inv-items th{background:var(--surface2);padding:10px 16px;font-size:12px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);text-align:left}
+  .inv-items td{padding:14px 16px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:top}
+  .inv-items tbody tr:last-child td{border-bottom:none}
+  .inv-item-name{font-weight:600;margin-bottom:3px}
+  .inv-item-desc{font-size:12px;color:var(--text-muted)}
+  .inv-summary{padding:14px 24px;display:flex;justify-content:flex-end;background:var(--surface2)}
+  .inv-summary-table{width:260px}
+  .inv-summary-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+  .inv-summary-row .isl{color:var(--text-muted)}
+  .inv-summary-row .isv{font-family:var(--font-mono)}
+  .inv-summary-total{display:flex;justify-content:space-between;font-size:15px;font-weight:700;padding:10px 0 4px;border-top:2px solid var(--border);margin-top:6px}
+  .inv-summary-total .isl{color:var(--text)}
+  .inv-summary-total .isv{color:var(--primary);font-family:var(--font-mono)}
+  .inv-footer{padding:12px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:rgba(241,91,38,.04)}
+  .inv-footer-item{font-size:12px;color:var(--text-muted);line-height:1.7}
+  .inv-footer-item strong{color:var(--text)}
+
+  /* ===== BURN CHART ===== */
+  .burn-chart{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px}
+  .burn-chart-title{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:500}
+  .burn-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:12px}
+  .burn-bar-row:last-child{margin-bottom:0}
+  .burn-bar-label{color:var(--text-muted);width:90px;flex-shrink:0}
+  .burn-bar-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+  .burn-bar-fill{height:100%;background:var(--primary);border-radius:4px}
+  .burn-bar-val{font-family:var(--font-mono);font-size:12px;color:var(--text);flex-shrink:0;min-width:72px;text-align:right}
+  @media print{
+    .sidebar,.topbar,.demo-banner,.modal-overlay{display:none!important}
+    .main{margin:0!important}
+    .content{padding:20px!important}
+    .page:not(#page-receipt){display:none!important}
+    #page-receipt{display:block!important}
+    .section-header button{display:none!important}
+    .inv-card{border:1px solid #ccc!important;border-radius:0!important}
+    .inv-head,.inv-parties,.inv-summary,.inv-footer{background:#f5f5f5!important}
+    body,html,.app-shell,.main,.content{background:#fff!important}
+  }
+
+  /* ===== LOGIN ===== */
+  .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;position:fixed;inset:0;z-index:500;background:var(--bg);animation:fadeIn .4s ease}
+  .login-screen.hidden{display:none}
+  .login-box{background:var(--surface);border:1px solid var(--border-accent);border-radius:24px;padding:40px;width:100%;max-width:420px;position:relative;overflow:hidden}
+  .login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--primary),#ff8c5a,transparent)}
+  .login-logo{width:52px;height:52px;background:var(--primary);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:20px;box-shadow:0 8px 24px rgba(241,91,38,.3)}
+  .login-title{font-family:var(--font-heading);font-size:34px;letter-spacing:3px;margin-bottom:5px}
+  .login-sub{font-size:13px;color:var(--text-muted);margin-bottom:28px}
+  .tab-switch{display:flex;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:20px}
+  .tab-switch-btn{flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;cursor:pointer;background:transparent;color:var(--text-muted);font-family:var(--font-body);transition:all .2s}
+  .tab-switch-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+  .form-group{margin-bottom:16px}
+  .otp-inputs{display:flex;gap:6px;margin:14px 0;width:100%}
+  .otp-input{flex:1;min-width:0;aspect-ratio:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;text-align:center;font-size:clamp(14px,4.5vw,20px);font-family:var(--font-mono);color:var(--text);outline:none;transition:border-color .2s;padding:0}
+  .otp-input:focus{border-color:var(--primary)}
+  @media(max-width:480px){.login-box{padding:28px 20px}}
+
+  ::-webkit-scrollbar{width:5px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+  /* ===== LIGHT MODE ===== */
+  body.light-mode {
+    --bg: #f0f2f7;
+    --surface: #ffffff;
+    --surface2: #e8ebf2;
+    --border: rgba(0,0,0,0.10);
+    --border-accent: rgba(241,91,38,0.25);
+    --text: #1a1d23;
+    --text-muted: #6b7280;
+    --text-dim: #9ca3af;
+    --primary-dim: rgba(241,91,38,0.10);
+  }
+  body.light-mode::before{opacity:.08}
+  body.light-mode::after{background:radial-gradient(ellipse,rgba(241,91,38,.06) 0%,transparent 70%)}
+  body.light-mode .topbar{background:rgba(255,255,255,.92);border-bottom-color:rgba(0,0,0,.10)}
+  body.light-mode .nav-item:hover{background:rgba(0,0,0,.04)}
+  body.light-mode .lock-btn:hover{background:rgba(0,0,0,.03)}
+  body.light-mode tbody tr:hover{background:rgba(0,0,0,.03)}
+  body.light-mode .device-card-footer{background:rgba(0,0,0,.02)}
+  body.light-mode .avatar-card:hover{border-color:rgba(0,0,0,.18)}
+  body.light-mode .tab-btn.active{box-shadow:0 1px 4px rgba(0,0,0,.15)}
+  body.light-mode .tab-switch-btn.active{box-shadow:0 1px 4px rgba(0,0,0,.12)}
+  body.light-mode .modal-overlay{background:rgba(0,0,0,.55)}
+  body.light-mode .device-card:hover{box-shadow:0 8px 32px rgba(241,91,38,.1)}
+  body.light-mode .device-card.selected{box-shadow:0 0 0 1px var(--primary),0 8px 32px rgba(241,91,38,.12)}
+  body.light-mode .login-screen{background:var(--bg)}
+  body.light-mode .table-wrap{background:var(--surface)}
+  body.light-mode td{background:var(--surface)}
+  body.light-mode tbody tr:hover td{background:rgba(0,0,0,.03)}
+  body.light-mode thead tr th{background:var(--surface)}
+  body.light-mode .inv-head{background:var(--surface)}
+  body.light-mode .inv-summary{background:var(--surface)}
+  body.light-mode .receipt-total{background:var(--surface)}
+
+  .theme-toggle-btn{width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .2s;flex-shrink:0;line-height:1}
+  .theme-toggle-btn:hover{border-color:var(--primary)}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🔮</div>
+    <h1 class="login-title">REALFACT<span style="color:var(--primary)">AVATAR</span></h1>
+    <p class="login-sub">เข้าสู่ระบบเพื่อจัดการ Avatar ของคุณ</p>
+    <div class="tab-switch">
+      <button class="tab-switch-btn active" onclick="setLoginTab('email',this)">📧 Email</button>
+      <button class="tab-switch-btn" onclick="setLoginTab('phone',this)">📱 Phone</button>
+    </div>
+    <div id="loginTabEmail">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" class="form-input" placeholder="you@example.com" value="demo@realfactavatar.com">
+      </div>
+    </div>
+    <div id="loginTabPhone" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <input type="tel" class="form-input" placeholder="08x-xxx-xxxx">
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="showOTP()">ส่ง OTP →</button>
+    <div id="otpSection" style="display:none">
+      <label class="form-label">กรอก OTP 6 หลัก</label>
+      <div class="otp-inputs">
+        <input class="otp-input" maxlength="1" value="3">
+        <input class="otp-input" maxlength="1" value="8">
+        <input class="otp-input" maxlength="1" value="9">
+        <input class="otp-input" maxlength="1" value="1">
+        <input class="otp-input" maxlength="1" value="2">
+        <input class="otp-input" maxlength="1" value="4">
+      </div>
+      <p class="text-muted text-sm mb-16">OTP หมดอายุใน <strong style="color:var(--primary)">04:32</strong> · <a href="#" style="color:var(--primary)">ส่งใหม่</a></p>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">✅ ยืนยัน OTP เข้าสู่ระบบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP SHELL ===== -->
+<div class="app-shell">
+
+  <!-- ===== SIDEBAR ===== -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div class="sidebar-brand">REALFACT<span style="color:var(--primary)">AVATAR</span></div>
+
+    <button class="nav-item active" onclick="showPage('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span class="nav-label">Dashboard</span>
+    </button>
+    <button class="nav-item" onclick="showPage('devices',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      <span class="nav-label">Devices</span>
+    </button>
+    <button class="nav-item" onclick="showPage('avatars',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span class="nav-label">Avatar Presets</span>
+    </button>
+    <button class="nav-item" onclick="showPage('wallet',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="22" height="16" rx="2"/><path d="M1 10h22"/><circle cx="17" cy="15" r="2"/></svg>
+      <span class="nav-label">Wallet</span>
+    </button>
+    <button class="nav-item" onclick="showPage('history',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span class="nav-label">Session History</span>
+    </button>
+    <button class="nav-item" onclick="showPage('receipt',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span class="nav-label">e-Receipt</span>
+    </button>
+
+    <button class="nav-item" onclick="showPage('settings',this)">
+      <i class="fa-solid fa-gear" style="font-size:18px"></i>
+      <span class="nav-label">Settings</span>
+    </button>
+
+    <div class="sidebar-bottom">
+      <div class="nav-divider"></div>
+      <button class="lock-btn" id="lockBtn" onclick="toggleSidebarLock()">
+        <svg id="lockIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span class="lock-label" id="lockLabel">ล็อก Sidebar</span>
+      </button>
+      <button class="nav-item" style="color:var(--text-muted)" onclick="doLogout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span class="nav-label">Logout</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main" id="mainArea">
+
+    <div class="topbar">
+      <span class="topbar-title">REALFACT<span>AVATAR</span></span>
+      <span class="topbar-page" id="topbarPageName">DASHBOARD</span>
+      <div class="topbar-right">
+        <div class="wallet-chip" onclick="showPage('wallet',null)">
+          <span class="ti">◈</span><span class="ta" id="walletBalance">2,450</span><span class="tl">tokens</span>
+        </div>
+        <div class="alert-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <div class="dot"></div>
+        </div>
+        <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="สลับ Light/Dark Mode">🌙</button>
+        <div class="user-av">DA</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== DASHBOARD ===== -->
+      <div class="page active" id="page-dashboard">
+        <div class="demo-banner">
+          <div class="demo-banner-icon">🎁</div>
+          <div class="demo-banner-text">
+            <h4>Demo Credit สำหรับบัญชีใหม่!</h4>
+            <p>ทดลองใช้งานได้ทันทีด้วย System Default Preset — ก่อนที่ Admin จะสร้าง Preset เฉพาะให้</p>
+          </div>
+          <div class="demo-banner-amt"><div class="amount">500</div><div class="label">Demo Tokens</div></div>
+        </div>
+
+        <div class="alert-banner mb-24">
+          <div class="ai">⚠️</div>
+          <div class="at"><strong>Token ใกล้หมด</strong> — เหลือ 2,450 tokens (~8.2 นาที) ควรเติมก่อน End User จะมา Interact</div>
+          <button class="btn btn-sm btn-primary" onclick="showPage('wallet',null)" style="flex-shrink:0">เติม Token</button>
+        </div>
+
+        <div class="section-header">
+          <div>
+            <div class="section-title">DASH<span class="accent">BOARD</span></div>
+            <div class="section-sub">สรุปภาพรวม — วันนี้</div>
+          </div>
+        </div>
+
+        <div class="grid-4 mb-24">
+          <div class="stat-card"><div class="stat-icon">◈</div><div class="stat-label">Token คงเหลือ</div><div class="stat-value primary">2,450</div><div class="stat-sub">≈ 8.2 นาที</div></div>
+          <div class="stat-card"><div class="stat-icon">📺</div><div class="stat-label">Devices Online</div><div class="stat-value">2 <span style="font-size:16px;color:var(--text-muted)">/ 3</span></div><div class="stat-sub">1 กำลัง Active Session</div></div>
+          <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-label">Sessions วันนี้ (ทุกตู้)</div><div class="stat-value">17</div><div class="stat-sub">Box-A: 12 · Box-B: 5</div></div>
+          <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-label">Token ใช้วันนี้</div><div class="stat-value">680</div><div class="stat-sub">เฉลี่ย 40 tok/session</div></div>
+        </div>
+
+        <!-- Device Overview compact (PRD §3.2) -->
+        <div class="card mb-24" style="padding:16px 20px">
+          <div class="font-600 mb-12" style="font-size:13px"><i class="fa-solid fa-tv" style="margin-right:6px;opacity:.6"></i>สถานะ Device</div>
+          <div style="display:grid;grid-template-columns:56px 1fr auto auto;gap:8px 16px;align-items:center">
+            <!-- Box-A -->
+            <span class="chip chip-blue" style="font-size:11px;justify-self:start">Box-A</span>
+            <div><span class="font-600 text-sm">Aria</span><span class="text-muted text-sm"> · Sales Assist · Lobby 1F</span></div>
+            <span class="chip chip-orange" style="font-size:11px;white-space:nowrap"><i class="fa-solid fa-circle" style="font-size:7px"></i> Active</span>
+            <span class="text-muted text-sm" style="text-align:right;white-space:nowrap">12 sessions · 434 tok</span>
+            <!-- Box-B -->
+            <span class="chip chip-blue" style="font-size:11px;justify-self:start">Box-B</span>
+            <div><span class="font-600 text-sm">Nova</span><span class="text-muted text-sm"> · Receptionist · Meeting 3F</span></div>
+            <span class="chip chip-green" style="font-size:11px;white-space:nowrap"><i class="fa-solid fa-circle" style="font-size:7px"></i> Online</span>
+            <span class="text-muted text-sm" style="text-align:right;white-space:nowrap">5 sessions · 246 tok</span>
+            <!-- Box-C -->
+            <span class="chip chip-blue" style="font-size:11px;justify-self:start;opacity:.5">Box-C</span>
+            <div class="text-muted text-sm">— · Reception 1F</div>
+            <span class="chip chip-gray" style="font-size:11px;white-space:nowrap"><i class="fa-solid fa-circle" style="font-size:7px"></i> Offline</span>
+            <span class="text-muted text-sm" style="text-align:right;opacity:.4">0 sessions</span>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card-accent">
+            <div class="flex items-center justify-between mb-16">
+              <div class="font-600">Session ล่าสุด (ทุกตู้)</div>
+              <button class="btn btn-sm btn-outline" onclick="showPage('history',null)">ดูทั้งหมด →</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Session ID</th><th>Device</th><th>เริ่ม</th><th>เวลา</th><th>Token</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="text-mono text-primary text-sm">S-0217</span></td><td><div class="font-600">Box-A</div><div class="text-muted text-sm">Lobby</div></td><td class="text-mono text-sm">14:32</td><td class="text-mono">03:12</td><td class="amount-neg">-48</td></tr>
+                  <tr><td><span class="text-mono text-primary text-sm">S-0216</span></td><td><div class="font-600">Box-B</div><div class="text-muted text-sm">Meeting</div></td><td class="text-mono text-sm">14:15</td><td class="text-mono">20:00</td><td class="amount-neg">-300</td></tr>
+                  <tr><td><span class="text-mono text-primary text-sm">S-0215</span></td><td><div class="font-600">Box-A</div><div class="text-muted text-sm">Lobby</div></td><td class="text-mono text-sm">13:50</td><td class="text-mono">05:44</td><td class="amount-neg">-86</td></tr>
+                  <tr><td><span class="text-mono text-primary text-sm">S-0214</span></td><td><div class="font-600">Box-A</div><div class="text-muted text-sm">Lobby</div></td><td class="text-mono text-sm">13:22</td><td class="text-mono">08:10</td><td class="amount-neg">-122</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="flex items-center justify-between mb-16">
+              <div class="font-600">Token Wallet</div>
+              <div class="chip chip-orange">Live</div>
+            </div>
+            <div style="text-align:center;padding:16px 0">
+              <div style="font-family:var(--font-heading);font-size:60px;color:var(--primary);letter-spacing:4px;line-height:1">2,450</div>
+              <div class="text-muted text-sm" style="margin:8px 0">tokens คงเหลือ ≈ 8.2 นาที</div>
+              <div class="timer-track" style="margin:14px 0"><div class="timer-fill" style="width:24%"></div></div>
+              <div class="flex gap-8" style="justify-content:center">
+                <button class="btn btn-primary" onclick="showPage('wallet',null)">+ เติม Token</button>
+                <button class="btn btn-outline" onclick="showPage('history',null)">ประวัติ</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== DEVICES ===== -->
+      <div class="page" id="page-devices">
+        <div class="section-header">
+          <div>
+            <div class="section-title">MY <span class="accent">DEVICES</span></div>
+            <div class="section-sub">เลือก Device เพื่อดูสถานะ Session และควบคุม Avatar</div>
+          </div>
+        </div>
+
+        <div class="grid-3 mb-24">
+          <div class="device-card selected" onclick="selectDevice(this,'Box-A',true)">
+            <div class="device-card-header">
+              <div class="device-thumb active-t">🔮<div class="scan"></div></div>
+              <div class="device-info">
+                <div class="device-name">Box-A</div>
+                <div class="device-model"><i class="fa-solid fa-tv" style="width:13px;opacity:.7"></i> RFA-Pro &nbsp;<i class="fa-solid fa-expand" style="width:13px;opacity:.7"></i> 65"</div>
+                <div class="device-loc"><i class="fa-solid fa-location-dot" style="width:13px;color:var(--primary);opacity:.8"></i> Lobby 1F</div>
+                <div style="margin-top:8px"><div class="status-badge session"><div class="status-dot"></div>SESSION ACTIVE</div></div>
+              </div>
+            </div>
+            <div class="device-card-footer">
+              <div class="session-count-badge"><i class="fa-solid fa-clock-rotate-left" style="font-size:11px"></i><span>วันนี้</span><span class="scn">12</span><span>sessions</span></div>
+              <div class="chip chip-orange" style="font-size:12px"><i class="fa-solid fa-robot" style="font-size:11px"></i> Aria</div>
+            </div>
+          </div>
+
+          <div class="device-card" onclick="selectDevice(this,'Box-B',false)">
+            <div class="device-card-header">
+              <div class="device-thumb">🖥</div>
+              <div class="device-info">
+                <div class="device-name">Box-B</div>
+                <div class="device-model"><i class="fa-solid fa-tv" style="width:13px;opacity:.7"></i> RFA-Standard &nbsp;<i class="fa-solid fa-expand" style="width:13px;opacity:.7"></i> 42"</div>
+                <div class="device-loc"><i class="fa-solid fa-location-dot" style="width:13px;color:var(--primary);opacity:.8"></i> Meeting Room 3F</div>
+                <div style="margin-top:8px"><div class="status-badge online"><div class="status-dot"></div>Standby</div></div>
+              </div>
+            </div>
+            <div class="device-card-footer">
+              <div class="session-count-badge"><i class="fa-solid fa-clock-rotate-left" style="font-size:11px"></i><span>วันนี้</span><span class="scn">5</span><span>sessions</span></div>
+              <div class="chip chip-gray" style="font-size:12px"><i class="fa-solid fa-robot" style="font-size:11px"></i> Nova</div>
+            </div>
+          </div>
+
+          <div class="device-card offline">
+            <div class="device-card-header">
+              <div class="device-thumb">📺</div>
+              <div class="device-info">
+                <div class="device-name">Box-C</div>
+                <div class="device-model"><i class="fa-solid fa-tv" style="width:13px;opacity:.7"></i> RFA-Lite &nbsp;<i class="fa-solid fa-expand" style="width:13px;opacity:.7"></i> 32"</div>
+                <div class="device-loc"><i class="fa-solid fa-location-dot" style="width:13px;opacity:.5"></i> Warehouse</div>
+                <div style="margin-top:8px"><div class="status-badge offline"><div class="status-dot"></div>Offline</div></div>
+              </div>
+            </div>
+            <div class="device-card-footer">
+              <div class="session-count-badge"><i class="fa-solid fa-clock-rotate-left" style="font-size:11px"></i><span>วันนี้</span><span class="scn" style="color:var(--text-muted)">0</span><span>sessions</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session Monitor -->
+        <div id="sessionPanel" style="display:none">
+          <div class="section-title mb-16" style="font-size:22px">SESSION MONITOR — <span class="accent" id="activDeviceName">Box-A</span></div>
+          <div class="grid-2 mb-16">
+            <div>
+              <!-- ACTIVE -->
+              <div class="session-panel mb-16" id="sessionActivePanel">
+                <div class="live-indicator"><div class="live-dot"></div>SESSION ACTIVE · S-<span id="activeSessionId">0217</span></div>
+                <div class="session-timer"><span id="sessionMin">03</span>:<span id="sessionSec">12</span></div>
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">สูงสุด 20:00 นาที · Avatar: Aria · KB: Product Catalog</div>
+                <div class="timer-track"><div class="timer-fill" id="sessionBar" style="width:16%"></div></div>
+                <div class="flex gap-16 mb-16">
+                  <div class="session-meta-row" style="flex:1;margin:0"><span>Token หักแล้ว:</span><span class="val" id="tokConsumed">48</span></div>
+                  <div class="session-meta-row" style="flex:1;margin:0"><span>Rate:</span><span class="val">15 tok/min</span></div>
+                </div>
+                <button class="session-trigger stop" onclick="endSession()">⏹ Stop Session (จาก Web App)</button>
+              </div>
+
+              <!-- STANDBY -->
+              <div class="session-panel mb-16" id="sessionIdlePanel" style="display:none">
+                <div style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:14px">● STANDBY — รอ End User มา Interact</div>
+                <div class="standby-box">
+                  <div class="standby-row"><span class="sl">Avatar</span><span class="sv" id="idleAvatarName">Nova</span></div>
+                  <div class="standby-row"><span class="sl">KB</span><span class="sv" id="idleKb">Company FAQ</span></div>
+                  <div class="standby-row"><span class="sl">Rate</span><span class="sv">15 tok/min</span></div>
+                  <div class="standby-row"><span class="sl">Pre-check</span><span class="sv" style="color:var(--success)">✅ Token พอสำหรับ 20 นาที</span></div>
+                </div>
+                <p class="text-muted text-sm mb-16" style="line-height:1.7">
+                  Session จะเริ่มอัตโนมัติเมื่อ <strong style="color:var(--text)">End User เดินมา Interact (Wake Word / กดปุ่มที่ตู้)</strong><br>
+                  หรือ Trigger จาก Web App ด้านล่าง
+                </p>
+                <button class="session-trigger" onclick="startSession()">▶ Trigger Session (จาก Web App)</button>
+              </div>
+            </div>
+
+            <!-- Right: Today summary -->
+            <div class="card">
+              <div class="flex items-center justify-between mb-12">
+                <div class="font-600">Sessions วันนี้ — <span class="text-primary" id="sessionPanelDeviceName">Box-A</span></div>
+                <div class="chip chip-orange" id="todayChip">12 sessions</div>
+              </div>
+              <div class="today-strip">
+                <div class="ts-label">จำนวน Sessions วันนี้</div>
+                <div class="ts-val" id="todayCount">12</div>
+              </div>
+              <div class="flex gap-8 mb-8">
+                <div style="flex:1;background:var(--surface2);border-radius:8px;padding:10px;text-align:center;font-size:12px;color:var(--text-muted)">
+                  <div>รวมเวลา</div>
+                  <div class="text-mono" style="font-size:16px;color:var(--text)" id="todayTotalDur">84 min</div>
+                </div>
+                <div style="flex:1;background:var(--surface2);border-radius:8px;padding:10px;text-align:center;font-size:12px;color:var(--text-muted)">
+                  <div>Token หัก</div>
+                  <div class="text-mono" style="font-size:16px;color:var(--error)" id="todayTotalTok">-480</div>
+                </div>
+              </div>
+              <div class="flex gap-8">
+                <div style="flex:1;background:var(--surface2);border-radius:8px;padding:10px;text-align:center;font-size:12px;color:var(--text-muted)">
+                  <div>เฉลี่ย/session</div>
+                  <div class="text-mono" style="font-size:16px;color:var(--text)" id="todayAvgDur">7 min</div>
+                </div>
+                <div style="flex:1;background:var(--surface2);border-radius:8px;padding:10px;text-align:center;font-size:12px;color:var(--text-muted)">
+                  <div>เฉลี่ย tok/session</div>
+                  <div class="text-mono" style="font-size:16px;color:var(--text)" id="todayAvgTok">40</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mb-16">
+            <div class="flex items-center justify-between mb-12">
+              <div class="font-600">Avatar ที่โหลดอยู่</div>
+              <button class="btn btn-sm btn-outline" onclick="showPage('avatars',null)">เปลี่ยน Avatar →</button>
+            </div>
+            <div class="flex items-center gap-12">
+              <div style="width:56px;height:76px;background:var(--primary-dim);border:1px solid var(--border-accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:30px" id="panelAvatarEmoji">🤖</div>
+              <div>
+                <div class="font-600" id="panelAvatarName">Aria</div>
+                <div class="text-muted text-sm" id="panelAvatarRole">Product Expert</div>
+                <div class="text-muted text-sm" id="panelAvatarKb">KB: Product Catalog 2024</div>
+                <div class="text-muted text-sm" id="panelAvatarRate" style="margin-top:2px">Rate: 15 tokens/min</div>
+                <div style="margin-top:6px"><span class="chip chip-orange" style="font-size:12px">⭐ Suggested</span></div>
+              </div>
+              <div style="margin-left:auto;text-align:right">
+                <div class="text-muted" style="font-size:12px;margin-bottom:4px">สถานะ Avatar</div>
+                <div class="status-badge session" id="panelAvatarStatus"><div class="status-dot"></div>LOADED</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== DETAILED SESSION LOG (bottom) ===== -->
+          <div class="card">
+            <div class="flex items-center justify-between mb-16">
+              <div>
+                <div class="font-600">Session Log — <span class="text-primary" id="logDeviceName">Box-A</span></div>
+                <div class="text-muted" style="font-size:12px;margin-top:2px">ประวัติ Sessions วันนี้ของตู้นี้ (ล่าสุดก่อน)</div>
+              </div>
+              <button class="btn btn-sm btn-outline" onclick="showPage('history',null)">ดูประวัติทั้งหมด →</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Session ID</th>
+                    <th>เริ่มเวลา</th>
+                    <th>สิ้นสุด</th>
+                    <th>ระยะเวลา</th>
+                    <th>Avatar</th>
+                    <th>Knowledge Base</th>
+                    <th>Agent Role</th>
+                    <th>สถานะ</th>
+                    <th>Token หัก</th>
+                    <th>Token Rate</th>
+                  </tr>
+                </thead>
+                <tbody id="detailLogBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== AVATARS ===== -->
+      <div class="page" id="page-avatars">
+        <div class="section-header">
+          <div>
+            <div class="section-title">AVATAR <span class="accent">PRESETS</span></div>
+            <div class="section-sub">เลือก Preset แล้ว Bind กับ Box · Preview ฟรี ไม่เสีย Token</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-primary btn-sm" id="vbtnGallery" onclick="switchAvatarView('avatarGalleryView')">
+            <i class="fa-solid fa-th-large"></i> Preset Gallery
+          </button>
+          <button class="btn btn-outline btn-sm" id="vbtnLog" onclick="switchAvatarView('assignLogView')">
+            <i class="fa-solid fa-clock-rotate-left"></i> Assign Log
+          </button>
+        </div>
+        <div id="avatarGalleryView">
+        <div class="tab-bar">
+          <button class="tab-btn active">ทั้งหมด</button>
+          <button class="tab-btn">⭐ Suggested</button>
+          <button class="tab-btn">ใช้บ่อย</button>
+        </div>
+        <div class="grid-3">
+          <div class="avatar-card selected" onclick="selectAvatar(this,'Aria')">
+            <div class="avatar-thumb" style="background:linear-gradient(135deg,#1a1f2e,#2d1f35)">🤖<div class="suggested-badge">⭐ Suggested</div></div>
+            <div class="avatar-body">
+              <div class="avatar-name">Aria</div>
+              <div class="avatar-meta">
+                <div><i class="fa-solid fa-book-open"></i> KB: Product Catalog 2024</div>
+                <div><i class="fa-solid fa-microphone"></i> Voice: Female TH</div>
+                <div><i class="fa-solid fa-robot"></i> Agent: Sales Assist</div>
+              </div>
+              <div class="avatar-rate"><div class="rate-val"><i class="fa-solid fa-bolt"></i> 15 tokens/min</div><button class="preview-btn">Preview</button></div>
+            </div>
+          </div>
+          <div class="avatar-card" onclick="selectAvatar(this,'Nova')">
+            <div class="avatar-thumb" style="background:linear-gradient(135deg,#1a2e2a,#1f352d)">👩‍💼</div>
+            <div class="avatar-body">
+              <div class="avatar-name">Nova</div>
+              <div class="avatar-meta">
+                <div><i class="fa-solid fa-book-open"></i> KB: Company FAQ</div>
+                <div><i class="fa-solid fa-microphone"></i> Voice: Female TH</div>
+                <div><i class="fa-solid fa-robot"></i> Agent: Receptionist</div>
+              </div>
+              <div class="avatar-rate"><div class="rate-val"><i class="fa-solid fa-bolt"></i> 15 tokens/min</div><button class="preview-btn">Preview</button></div>
+            </div>
+          </div>
+          <div class="avatar-card" onclick="selectAvatar(this,'Max')">
+            <div class="avatar-thumb" style="background:linear-gradient(135deg,#2e1a1a,#35251f)">👨‍💻<div class="suggested-badge">⭐ Suggested</div></div>
+            <div class="avatar-body">
+              <div class="avatar-name">Max</div>
+              <div class="avatar-meta">
+                <div><i class="fa-solid fa-book-open"></i> KB: Tech Support Manual</div>
+                <div><i class="fa-solid fa-microphone"></i> Voice: Male TH</div>
+                <div><i class="fa-solid fa-robot"></i> Agent: Tech Support</div>
+              </div>
+              <div class="avatar-rate"><div class="rate-val"><i class="fa-solid fa-bolt"></i> 15 tokens/min</div><button class="preview-btn">Preview</button></div>
+            </div>
+          </div>
+          <div class="avatar-card" onclick="selectAvatar(this,'Kana')">
+            <div class="avatar-thumb" style="background:linear-gradient(135deg,#1f1a2e,#2a1f35)">👩‍🔬</div>
+            <div class="avatar-body">
+              <div class="avatar-name">Kana</div>
+              <div class="avatar-meta">
+                <div><i class="fa-solid fa-book-open"></i> KB: Medical Guide</div>
+                <div><i class="fa-solid fa-microphone"></i> Voice: Female TH</div>
+                <div><i class="fa-solid fa-robot"></i> Agent: Health Advisor</div>
+              </div>
+              <div class="avatar-rate"><div class="rate-val"><i class="fa-solid fa-bolt"></i> 15 tokens/min</div><button class="preview-btn">Preview</button></div>
+            </div>
+          </div>
+          <div class="avatar-card" onclick="selectAvatar(this,'Leo')">
+            <div class="avatar-thumb" style="background:linear-gradient(135deg,#2e2a1a,#35311f)">🧑‍🏫</div>
+            <div class="avatar-body">
+              <div class="avatar-name">Leo</div>
+              <div class="avatar-meta">
+                <div><i class="fa-solid fa-book-open"></i> KB: Training Materials</div>
+                <div><i class="fa-solid fa-microphone"></i> Voice: Male TH</div>
+                <div><i class="fa-solid fa-robot"></i> Agent: Trainer</div>
+              </div>
+              <div class="avatar-rate"><div class="rate-val"><i class="fa-solid fa-bolt"></i> 15 tokens/min</div><button class="preview-btn">Preview</button></div>
+            </div>
+          </div>
+          <div class="avatar-card" onclick="selectAvatar(this,'System Default')">
+            <div class="avatar-thumb" style="background:var(--surface2)">🎭<div class="suggested-badge" style="background:var(--success)">DEFAULT DEMO</div></div>
+            <div class="avatar-body">
+              <div class="avatar-name">System Default</div>
+              <div class="avatar-meta">
+                <div><i class="fa-solid fa-book-open"></i> KB: General Knowledge</div>
+                <div><i class="fa-solid fa-microphone"></i> Voice: TH Neutral</div>
+                <div><i class="fa-solid fa-robot"></i> Agent: General</div>
+              </div>
+              <div class="avatar-rate"><div class="rate-val"><i class="fa-solid fa-bolt"></i> 15 tokens/min</div><span class="chip chip-green" style="font-size:12px"><i class="fa-solid fa-star" style="font-size:10px"></i> Demo Ready</span></div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:6px">ไม่ต้องตั้งค่า · เริ่มใช้งานได้ทันที</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:24px;display:flex;justify-content:flex-end;gap:12px">
+          <button class="btn btn-outline">ยกเลิก</button>
+          <button class="btn btn-primary btn-lg" id="loadAvatarBtn" onclick="openLoadModal()"><i class="fa-solid fa-wand-magic-sparkles"></i> Load Avatar Preset</button>
+        </div>
+        </div><!-- end avatarGalleryView -->
+
+        <!-- Assign Log View -->
+        <div id="assignLogView" style="display:none">
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Log ID</th>
+                  <th>วันที่/เวลา</th>
+                  <th>Device</th>
+                  <th>Preset เก่า</th>
+                  <th>Preset ใหม่</th>
+                  <th>โดย</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-mono text-sm">AL-0042</td>
+                  <td class="text-sm">20 ก.พ. 2567 · 09:32</td>
+                  <td><span class="chip chip-blue" style="font-size:11px">Box-A</span> Lobby</td>
+                  <td class="text-muted">Nova</td>
+                  <td><span class="font-600">Aria</span> <span class="chip chip-green" style="font-size:10px">ปัจจุบัน</span></td>
+                  <td><span class="chip chip-gray" style="font-size:11px">User</span></td>
+                </tr>
+                <tr>
+                  <td class="text-mono text-sm">AL-0041</td>
+                  <td class="text-sm">18 ก.พ. 2567 · 14:05</td>
+                  <td><span class="chip chip-blue" style="font-size:11px">Box-B</span> Meeting</td>
+                  <td class="text-muted">Kana</td>
+                  <td class="font-600">Nova</td>
+                  <td><span class="chip chip-gray" style="font-size:11px">User</span></td>
+                </tr>
+                <tr>
+                  <td class="text-mono text-sm">AL-0040</td>
+                  <td class="text-sm">15 ก.พ. 2567 · 10:18</td>
+                  <td><span class="chip chip-blue" style="font-size:11px">Box-A</span> Lobby</td>
+                  <td class="text-muted">System Default</td>
+                  <td class="font-600">Nova</td>
+                  <td><span class="chip chip-gray" style="font-size:11px">Admin</span></td>
+                </tr>
+                <tr>
+                  <td class="text-mono text-sm">AL-0039</td>
+                  <td class="text-sm">01 ก.พ. 2567 · 08:00</td>
+                  <td><span class="chip chip-blue" style="font-size:11px">Box-A</span> Lobby</td>
+                  <td class="text-muted">—</td>
+                  <td class="font-600">System Default</td>
+                  <td><span class="chip chip-orange" style="font-size:11px">Admin</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SETTINGS ===== -->
+      <div class="page" id="page-settings">
+        <div class="section-header">
+          <div>
+            <div class="section-title">ACCOUNT <span class="accent">SETTINGS</span></div>
+            <div class="section-sub">จัดการบัญชีและการตั้งค่าระบบ</div>
+          </div>
+        </div>
+
+        <!-- Account Info (read-only) -->
+        <div class="section-sep"><span><i class="fa-solid fa-id-card"></i> ข้อมูลบัญชี</span></div>
+        <div class="card mb-16">
+          <div class="grid-2" style="gap:0">
+            <div class="settings-field" style="padding:14px 0;border-bottom:1px solid var(--border)">
+              <div class="settings-label">Email (Login ID)</div>
+              <div class="settings-value">demo@realfact.ai <span class="chip chip-gray" style="font-size:11px">เปลี่ยนไม่ได้</span></div>
+            </div>
+            <div class="settings-field" style="padding:14px 0 14px 20px;border-bottom:1px solid var(--border)">
+              <div class="settings-label">Account ID</div>
+              <div class="settings-value text-mono">RFA-2024-00042</div>
+            </div>
+            <div class="settings-field" style="padding:14px 0 0">
+              <div class="settings-label">วันที่สมัคร</div>
+              <div class="settings-value">1 ม.ค. 2567</div>
+            </div>
+            <div class="settings-field" style="padding:14px 0 0 20px">
+              <div class="settings-label">สถานะบัญชี</div>
+              <div class="settings-value"><span class="chip chip-green"><i class="fa-solid fa-circle" style="font-size:7px"></i> Active</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile (editable) -->
+        <div class="section-sep"><span><i class="fa-solid fa-user-pen"></i> ข้อมูลโปรไฟล์</span></div>
+        <div class="card mb-16">
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">ชื่อแสดงผล (Display Name)</div>
+              <div class="settings-value">Demo Account</div>
+            </div>
+            <button class="btn btn-outline btn-sm">แก้ไข</button>
+          </div>
+          <div class="divider"></div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">เบอร์โทร</div>
+              <div class="settings-value">08X-XXX-XXXX <span class="text-muted text-sm">· ยืนยัน OTP เพื่อเปลี่ยน</span></div>
+            </div>
+            <button class="btn btn-outline btn-sm">เปลี่ยนเบอร์</button>
+          </div>
+        </div>
+
+        <!-- Security -->
+        <div class="section-sep"><span><i class="fa-solid fa-lock"></i> ความปลอดภัย</span></div>
+        <div class="card mb-16">
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">รหัสผ่าน</div>
+              <div class="settings-value" style="letter-spacing:3px">●●●●●●●●</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('changePassModal').classList.add('open')">
+              <i class="fa-solid fa-key"></i> เปลี่ยนรหัสผ่าน
+            </button>
+          </div>
+        </div>
+
+        <!-- Billing -->
+        <div class="section-sep"><span><i class="fa-solid fa-building"></i> ข้อมูลการเงิน / ใบกำกับภาษี</span></div>
+        <div class="card mb-16">
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">ชื่อบริษัท</div>
+              <div class="settings-value">Demo Company Co., Ltd.</div>
+            </div>
+            <button class="btn btn-outline btn-sm">แก้ไข</button>
+          </div>
+          <div class="divider"></div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">เลขผู้เสียภาษี (Tax ID)</div>
+              <div class="settings-value text-mono">0105565012345</div>
+            </div>
+            <button class="btn btn-outline btn-sm">แก้ไข</button>
+          </div>
+          <div class="divider"></div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">ที่อยู่สำหรับออกใบกำกับภาษี</div>
+              <div class="settings-value">123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110</div>
+            </div>
+            <button class="btn btn-outline btn-sm">แก้ไข</button>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="section-sep"><span><i class="fa-solid fa-bell"></i> การแจ้งเตือน</span></div>
+        <div class="card mb-16">
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">แจ้งเตือน Token เหลือน้อย</div>
+              <div class="settings-value text-muted text-sm">แจ้งเตือนเมื่อ Token ต่ำกว่าที่กำหนด</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="divider"></div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Low Balance Threshold</div>
+              <div class="settings-value text-muted text-sm">แจ้งเตือนเมื่อเหลือกี่ Token</div>
+            </div>
+            <div class="flex items-center gap-8">
+              <input type="number" class="input-inline" value="500" style="width:80px;text-align:right">
+              <span class="text-muted text-sm">tokens</span>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">แจ้งเตือนเมื่อ Session จบ</div>
+              <div class="settings-value text-muted text-sm">รับแจ้งทุกครั้งที่ Session สิ้นสุด</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="divider"></div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">แจ้งเตือนเมื่อ Top-up สำเร็จ</div>
+              <div class="settings-value text-muted text-sm">รับแจ้งทุกครั้งที่เติม Token สำเร็จ</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+
+        <!-- Language -->
+        <div class="section-sep"><span><i class="fa-solid fa-globe"></i> ภาษา / Language</span></div>
+        <div class="card">
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">ภาษาที่แสดงผล</div>
+              <div class="settings-value text-muted text-sm">เลือกภาษาสำหรับ Web App (MVP: ภาษาไทย)</div>
+            </div>
+            <div class="flex gap-8">
+              <button class="btn btn-primary btn-sm">🇹🇭 TH</button>
+              <button class="btn btn-outline btn-sm" style="opacity:.5" disabled>🇬🇧 EN</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="section-sep"><span><i class="fa-solid fa-palette"></i> การแสดงผล</span></div>
+        <div class="card">
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">โหมดการแสดงผล</div>
+              <div class="settings-value text-muted text-sm">สลับระหว่าง Dark Mode และ Light Mode</div>
+            </div>
+            <div class="flex gap-8">
+              <button id="settingsDarkBtn" class="btn btn-primary btn-sm" onclick="setTheme('dark')">🌙 Dark</button>
+              <button id="settingsLightBtn" class="btn btn-outline btn-sm" onclick="setTheme('light')">☀️ Light</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== WALLET ===== -->
+      <div class="page" id="page-wallet">
+        <div class="section-header">
+          <div>
+            <div class="section-title">TOKEN <span class="accent">WALLET</span></div>
+            <div class="section-sub">ยอดคงเหลือ · ใช้ร่วมกันทุก Device</div>
+          </div>
+        </div>
+        <!-- Section 1: ยอดคงเหลือ -->
+        <div class="grid-2 mb-8">
+
+          <!-- LEFT: Token Balance -->
+          <div class="card-accent">
+            <div class="flex items-center gap-8 mb-4">
+              <i class="fa-solid fa-wallet" style="font-size:18px;color:var(--primary)"></i>
+              <span class="text-muted text-sm">Token คงเหลือ</span>
+            </div>
+            <div id="walletBalance" style="font-family:var(--font-heading);font-size:60px;color:var(--primary);letter-spacing:4px;line-height:1">2,450</div>
+            <div class="text-muted text-sm" style="margin:8px 0 12px">
+              <i class="fa-solid fa-triangle-exclamation" style="color:var(--warning)"></i>
+              ≈ 8.2 นาที · ไม่พอ Pre-check Session ใหม่ (ต้องการ 300)
+            </div>
+            <div class="timer-track"><div class="timer-fill" style="width:24%"></div></div>
+          </div>
+
+          <!-- RIGHT: Two separated cards -->
+          <div style="display:flex;flex-direction:column;gap:14px">
+
+            <!-- Card A: Token Accounting (ยอดเข้า-ออก) -->
+            <div class="card">
+              <div class="font-600 mb-14 flex items-center gap-8">
+                <i class="fa-solid fa-scale-balanced" style="color:var(--primary)"></i>
+                ยอดสะสม Token เดือนนี้
+              </div>
+              <div class="flex justify-between text-sm mb-10">
+                <span class="text-muted"><i class="fa-solid fa-circle-plus" style="color:var(--success);width:14px"></i> Top-up เดือนนี้</span>
+                <span class="text-mono text-success">+10,000 tokens</span>
+              </div>
+              <div class="flex justify-between text-sm mb-10">
+                <span class="text-muted"><i class="fa-solid fa-gift" style="color:var(--warning);width:14px"></i> Demo Credit</span>
+                <span class="text-mono" style="color:var(--warning)">+500 tokens</span>
+              </div>
+              <div class="flex justify-between text-sm mb-10">
+                <span class="text-muted"><i class="fa-solid fa-fire-flame-curved" style="color:var(--error);width:14px"></i> Token ใช้ไปแล้ว</span>
+                <span class="text-mono" style="color:var(--error)">-680 tokens</span>
+              </div>
+              <div class="divider"></div>
+              <div class="flex justify-between text-sm">
+                <span class="text-muted"><i class="fa-solid fa-bolt" style="color:var(--primary);width:14px"></i> Rate (ทุก Avatar)</span>
+                <span class="text-mono">15 tokens/min</span>
+              </div>
+            </div>
+
+            <!-- Card B: Today Session Usage (การใช้งาน) -->
+            <div class="card">
+              <div class="font-600 mb-14 flex items-center gap-8">
+                <i class="fa-solid fa-calendar-day" style="color:var(--primary)"></i>
+                การใช้งานวันนี้
+              </div>
+              <div class="flex justify-between text-sm mb-10">
+                <span class="text-muted"><i class="fa-solid fa-tv" style="color:var(--primary);width:14px"></i> Sessions ทุกตู้</span>
+                <span class="text-mono text-primary">17 sessions</span>
+              </div>
+              <div class="flex justify-between text-sm mb-10">
+                <span class="text-muted"><i class="fa-solid fa-coins" style="color:var(--error);width:14px"></i> Token หักวันนี้</span>
+                <span class="text-mono" style="color:var(--error)">-680 tokens</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-muted"><i class="fa-solid fa-chart-simple" style="color:var(--primary);width:14px"></i> เฉลี่ย / Session</span>
+                <span class="text-mono">~40 tokens</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Section Separator -->
+        <div class="section-sep"><span><i class="fa-solid fa-bag-shopping"></i> เติม Token — เลือก Package</span></div>
+
+        <!-- Section 2: Packages -->
+        <div class="flex items-center justify-between mb-20">
+          <div>
+            <div class="section-title" style="font-size:26px">TOKEN <span class="accent">PACKAGES</span></div>
+            <div class="section-sub">ราคา Package · ยอดชำระจริงบวก VAT 7% เพิ่มเติม</div>
+          </div>
+          <div class="chip chip-gray">+VAT 7% เมื่อชำระ</div>
+        </div>
+        <div class="grid-4">
+
+          <!-- Starter -->
+          <div class="package-card" onclick="openPayModal(500,150,'Starter',0)">
+            <div class="pkg-tokens">500</div>
+            <div class="pkg-tokens-label">Tokens</div>
+            <div class="pkg-duration">≈ 33 นาที</div>
+            <div class="pkg-price-block">
+              <div class="pkg-price-main">฿150</div>
+              <button class="pkg-buy-btn" onclick="event.stopPropagation();openPayModal(500,150,'Starter',0)">🛒 ซื้อ Package นี้</button>
+            </div>
+          </div>
+
+          <!-- Pro -->
+          <div class="package-card popular" onclick="openPayModal(1500,400,'Pro',150)">
+            <div class="popular-tag">🔥 ยอดนิยม</div>
+            <div class="pkg-tokens">1,500</div>
+            <div class="pkg-tokens-label">Tokens</div>
+            <div class="pkg-bonus">+ 150 Bonus tokens</div>
+            <div class="pkg-duration">≈ 110 นาที</div>
+            <div class="pkg-price-block">
+              <div class="pkg-price-main">฿400</div>
+              <button class="pkg-buy-btn" onclick="event.stopPropagation();openPayModal(1500,400,'Pro',150)">🛒 ซื้อ Package นี้</button>
+            </div>
+          </div>
+
+          <!-- Business -->
+          <div class="package-card" onclick="openPayModal(5000,1000,'Business',750)">
+            <div class="pkg-tokens">5,000</div>
+            <div class="pkg-tokens-label">Tokens</div>
+            <div class="pkg-bonus">+ 750 Bonus tokens</div>
+            <div class="pkg-duration">≈ 383 นาที</div>
+            <div class="pkg-price-block">
+              <div class="pkg-price-main">฿1,000</div>
+              <button class="pkg-buy-btn" onclick="event.stopPropagation();openPayModal(5000,1000,'Business',750)">🛒 ซื้อ Package นี้</button>
+            </div>
+          </div>
+
+          <!-- Enterprise -->
+          <div class="package-card" onclick="openPayModal(15000,2500,'Enterprise',3000)">
+            <div class="pkg-tokens">15,000</div>
+            <div class="pkg-tokens-label">Tokens</div>
+            <div class="pkg-bonus">+ 3,000 Bonus tokens</div>
+            <div class="pkg-duration">≈ 1,200 นาที</div>
+            <div class="pkg-price-block">
+              <div class="pkg-price-main">฿2,500</div>
+              <button class="pkg-buy-btn" onclick="event.stopPropagation();openPayModal(15000,2500,'Enterprise',3000)">🛒 ซื้อ Package นี้</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Section Separator -->
+        <div class="section-sep"><span><i class="fa-solid fa-receipt"></i> ประวัติ Transaction</span></div>
+
+        <!-- Section 3: Transaction History -->
+        <div class="flex gap-8 mb-12" id="txnFilters">
+          <button class="chip chip-blue" onclick="filterTxn(this,'all')">ทั้งหมด</button>
+          <button class="chip chip-gray" onclick="filterTxn(this,'topup')"><i class="fa-solid fa-circle-plus"></i> Top-up</button>
+          <button class="chip chip-gray" onclick="filterTxn(this,'session')"><i class="fa-solid fa-fire-flame-curved"></i> Session</button>
+        </div>
+        <div class="table-wrap">
+          <table id="txnTable">
+            <thead><tr><th>วันที่</th><th>ประเภท</th><th>Package</th><th>Token</th><th>ราคา Package</th><th>VAT 7%</th><th>ยอดชำระ</th><th>สถานะ</th></tr></thead>
+            <tbody>
+              <tr data-type="topup"><td class="text-mono text-sm">18 ก.พ. 2026</td><td><span class="chip chip-green">Top-up</span></td><td>Pro (1,500+150 bonus)</td><td class="amount-pos">+1,650</td><td class="text-mono">฿400.00</td><td class="text-mono">฿28.00</td><td class="text-mono">฿428.00</td><td><span class="chip chip-green">✅ สำเร็จ</span></td></tr>
+              <tr data-type="topup"><td class="text-mono text-sm">10 ก.พ. 2026</td><td><span class="chip chip-green">Top-up</span></td><td>Business (5,000+750 bonus)</td><td class="amount-pos">+5,750</td><td class="text-mono">฿1,000.00</td><td class="text-mono">฿70.00</td><td class="text-mono">฿1,070.00</td><td><span class="chip chip-green">✅ สำเร็จ</span></td></tr>
+              <tr data-type="topup"><td class="text-mono text-sm">01 ก.พ. 2026</td><td><span class="chip chip-orange">Demo</span></td><td>Demo Credit</td><td class="amount-pos">+500</td><td class="text-mono">—</td><td class="text-mono">—</td><td class="text-mono">฿0</td><td><span class="chip chip-green">✅ ได้รับ</span></td></tr>
+              <tr data-type="session">
+                <td class="text-mono text-sm">20 ก.พ. 2026 · 14:32</td>
+                <td><span class="chip chip-orange" style="font-size:11px"><i class="fa-solid fa-fire-flame-curved"></i> Session</span></td>
+                <td>
+                  <a class="text-primary text-mono text-sm" style="cursor:pointer;text-decoration:none" onclick="showPage('history',null)">S-0217 →</a>
+                  <div class="text-muted text-sm">Box-A · Aria · 03:12</div>
+                </td>
+                <td class="text-mono" style="color:var(--error)">-48</td>
+                <td class="text-mono text-muted">—</td>
+                <td class="text-mono text-muted">—</td>
+                <td class="text-mono text-muted">—</td>
+                <td><span class="chip chip-green" style="font-size:11px">✅ สำเร็จ</span></td>
+              </tr>
+              <tr data-type="session">
+                <td class="text-mono text-sm">20 ก.พ. 2026 · 13:50</td>
+                <td><span class="chip chip-orange" style="font-size:11px"><i class="fa-solid fa-fire-flame-curved"></i> Session</span></td>
+                <td>
+                  <a class="text-primary text-mono text-sm" style="cursor:pointer;text-decoration:none" onclick="showPage('history',null)">S-0215 →</a>
+                  <div class="text-muted text-sm">Box-A · Aria · 05:44</div>
+                </td>
+                <td class="text-mono" style="color:var(--error)">-86</td>
+                <td class="text-mono text-muted">—</td>
+                <td class="text-mono text-muted">—</td>
+                <td class="text-mono text-muted">—</td>
+                <td><span class="chip chip-green" style="font-size:11px">✅ สำเร็จ</span></td>
+              </tr>
+              <tr data-type="session">
+                <td class="text-mono text-sm">20 ก.พ. 2026 · 12:44</td>
+                <td><span class="chip chip-orange" style="font-size:11px"><i class="fa-solid fa-fire-flame-curved"></i> Session</span></td>
+                <td>
+                  <a class="text-primary text-mono text-sm" style="cursor:pointer;text-decoration:none" onclick="showPage('history',null)">S-0213 →</a>
+                  <div class="text-muted text-sm">Box-B · Nova · 20:00</div>
+                </td>
+                <td class="text-mono" style="color:var(--error)">-300</td>
+                <td class="text-mono text-muted">—</td>
+                <td class="text-mono text-muted">—</td>
+                <td class="text-mono text-muted">—</td>
+                <td><span class="chip chip-green" style="font-size:11px">✅ สำเร็จ</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== HISTORY ===== -->
+      <div class="page" id="page-history">
+        <div class="section-header">
+          <div>
+            <div class="section-title">SESSION <span class="accent">HISTORY</span></div>
+            <div class="section-sub">ประวัติ Session — แต่ละครั้งที่ End User มา Interact กับ Box</div>
+          </div>
+          <div class="flex gap-8">
+            <select class="form-input" style="width:auto;padding:8px 14px"><option>7 วันล่าสุด</option><option>30 วันล่าสุด</option></select>
+            <select class="form-input" style="width:auto;padding:8px 14px"><option>ทุก Device</option><option>Box-A (Lobby)</option><option>Box-B (Meeting)</option></select>
+            <button class="btn btn-outline"><i class="fa-solid fa-download" style="margin-right:6px"></i>Export CSV</button>
+          </div>
+        </div>
+
+        <!-- Stats: 4 cards -->
+        <div class="grid-4 mb-16">
+          <div class="stat-card"><div class="stat-label"><i class="fa-solid fa-tv" style="margin-right:4px;opacity:.6"></i>Box-A (Lobby)</div><div class="stat-value primary">12</div><div class="stat-sub">84 นาที · -480 tokens</div></div>
+          <div class="stat-card"><div class="stat-label"><i class="fa-solid fa-tv" style="margin-right:4px;opacity:.6"></i>Box-B (Meeting)</div><div class="stat-value primary">5</div><div class="stat-sub">46 นาที · -200 tokens</div></div>
+          <div class="stat-card"><div class="stat-label"><i class="fa-solid fa-chart-simple" style="margin-right:4px;opacity:.6"></i>เฉลี่ย/Session</div><div class="stat-value">7.6<span style="font-size:14px;color:var(--text-muted)"> นาที</span></div><div class="stat-sub">40 tokens/session เฉลี่ย</div></div>
+          <div class="stat-card"><div class="stat-label"><i class="fa-solid fa-stopwatch" style="margin-right:4px;opacity:.6"></i>Session ยาวสุด</div><div class="stat-value">20:00</div><div class="stat-sub">Box-B · S-0216 · Nova</div></div>
+        </div>
+
+        <!-- Token burn chart -->
+        <div class="burn-chart">
+          <div class="burn-chart-title"><i class="fa-solid fa-fire-flame-curved" style="color:var(--primary);margin-right:6px"></i>Token Burn วันนี้ (ต่อตู้)</div>
+          <div class="burn-bar-row">
+            <div class="burn-bar-label">Box-A (Lobby)</div>
+            <div class="burn-bar-track"><div class="burn-bar-fill" style="width:100%"></div></div>
+            <div class="burn-bar-val">-480 tok</div>
+          </div>
+          <div class="burn-bar-row">
+            <div class="burn-bar-label">Box-B (Meeting)</div>
+            <div class="burn-bar-track"><div class="burn-bar-fill" style="width:41.7%"></div></div>
+            <div class="burn-bar-val">-200 tok</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Session ID</th><th>วันที่ / เริ่ม–จบ</th><th>Device</th><th>Avatar / KB</th><th>Agent Role</th><th>ระยะเวลา</th><th>Token หัก</th><th>ยอดหลังหัก</th><th>สถานะ</th></tr></thead>
+            <tbody>
+              <tr><td><span class="text-mono text-primary">S-0217</span></td><td><div>20 ก.พ. 2026</div><div class="text-muted text-sm text-mono">14:32 – 14:35</div></td><td><div class="font-600">Box-A</div><div class="text-muted text-sm">Lobby</div></td><td><div>Aria</div><div class="text-muted text-sm">Product Catalog</div></td><td class="text-sm">Sales Assist</td><td class="text-mono">03:12</td><td class="amount-neg">-48</td><td class="text-mono">2,450</td><td><span class="chip chip-orange">● Active</span></td></tr>
+              <tr><td><span class="text-mono text-primary">S-0216</span></td><td><div>20 ก.พ. 2026</div><div class="text-muted text-sm text-mono">14:15 – 14:35</div></td><td><div class="font-600">Box-B</div><div class="text-muted text-sm">Meeting</div></td><td><div>Nova</div><div class="text-muted text-sm">Company FAQ</div></td><td class="text-sm">Receptionist</td><td class="text-mono">20:00</td><td class="amount-neg">-300</td><td class="text-mono">2,498</td><td><span class="chip chip-green">✅ สำเร็จ</span></td></tr>
+              <tr><td><span class="text-mono text-primary">S-0215</span></td><td><div>20 ก.พ. 2026</div><div class="text-muted text-sm text-mono">13:50 – 13:56</div></td><td><div class="font-600">Box-A</div><div class="text-muted text-sm">Lobby</div></td><td><div>Aria</div><div class="text-muted text-sm">Product Catalog</div></td><td class="text-sm">Sales Assist</td><td class="text-mono">05:44</td><td class="amount-neg">-86</td><td class="text-mono">2,798</td><td><span class="chip chip-green">✅ สำเร็จ</span></td></tr>
+              <tr><td><span class="text-mono text-primary">S-0214</span></td><td><div>20 ก.พ. 2026</div><div class="text-muted text-sm text-mono">13:22 – 13:30</div></td><td><div class="font-600">Box-A</div><div class="text-muted text-sm">Lobby</div></td><td><div>Aria</div><div class="text-muted text-sm">Product Catalog</div></td><td class="text-sm">Sales Assist</td><td class="text-mono">08:10</td><td class="amount-neg">-122</td><td class="text-mono">2,884</td><td><span class="chip chip-green">✅ สำเร็จ</span></td></tr>
+              <tr><td><span class="text-mono text-primary">S-0213</span></td><td><div>20 ก.พ. 2026</div><div class="text-muted text-sm text-mono">12:44 – 13:04</div></td><td><div class="font-600">Box-B</div><div class="text-muted text-sm">Meeting</div></td><td><div>Nova</div><div class="text-muted text-sm">Company FAQ</div></td><td class="text-sm">Receptionist</td><td class="text-mono">20:00</td><td class="amount-neg">-300</td><td class="text-mono">3,006</td><td><span class="chip chip-green">✅ สำเร็จ</span></td></tr>
+              <tr><td><span class="text-mono text-primary">S-0212</span></td><td><div>20 ก.พ. 2026</div><div class="text-muted text-sm text-mono">11:05 – 11:07</div></td><td><div class="font-600">Box-A</div><div class="text-muted text-sm">Lobby</div></td><td><div>Aria</div><div class="text-muted text-sm">Product Catalog</div></td><td class="text-sm">Sales Assist</td><td class="text-mono">01:55</td><td class="amount-neg">-29</td><td class="text-mono">3,306</td><td><span class="chip chip-green">✅ สำเร็จ</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== RECEIPT ===== -->
+      <div class="page" id="page-receipt">
+        <div class="section-header">
+          <div>
+            <div class="section-title">TAX <span class="accent">INVOICE</span></div>
+            <div class="section-sub">ใบกำกับภาษีอิเล็กทรอนิกส์ · ออกอัตโนมัติหลังชำระสำเร็จ</div>
+          </div>
+          <div class="flex gap-8">
+            <button class="btn btn-outline">📧 ส่งทาง Email</button>
+            <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-file-arrow-down" style="margin-right:6px"></i>ดาวน์โหลด PDF</button>
+          </div>
+        </div>
+        <div class="flex gap-20" style="flex-wrap:wrap;align-items:flex-start">
+
+          <!-- ===== LEFT: Invoice History Table ===== -->
+          <div style="flex:1;min-width:420px">
+            <div class="flex items-center justify-between mb-16">
+              <div class="font-600"><i class="fa-solid fa-file-invoice" style="margin-right:6px;color:var(--primary)"></i>ประวัติ Invoice ทั้งหมด</div>
+              <button class="btn btn-outline btn-sm"><i class="fa-solid fa-download" style="margin-right:5px"></i>Export</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>เลขที่ Invoice</th>
+                    <th>วันที่ / เวลา</th>
+                    <th>Package</th>
+                    <th>Token</th>
+                    <th>ราคา Package</th>
+                    <th>VAT 7%</th>
+                    <th>ยอดชำระ</th>
+                    <th>ช่องทาง</th>
+                    <th>สถานะ</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="text-mono text-primary text-sm">INV-2026-0218-0042</span></td>
+                    <td><div>18 ก.พ. 2026</div><div class="text-muted text-sm text-mono">11:24 น.</div></td>
+                    <td><div class="font-600">Business</div><div class="text-muted text-sm">5,000 + 750B</div></td>
+                    <td class="amount-pos text-mono">+5,750</td>
+                    <td class="text-mono">฿1,000.00</td>
+                    <td class="text-mono">฿70.00</td>
+                    <td class="text-mono text-primary font-600">฿1,070.00</td>
+                    <td class="text-sm">PromptPay</td>
+                    <td><span class="chip chip-green">✅ ชำระแล้ว</span></td>
+                    <td><button class="btn btn-sm btn-outline">ดู Invoice</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="text-mono text-primary text-sm">INV-2026-0210-0031</span></td>
+                    <td><div>10 ก.พ. 2026</div><div class="text-muted text-sm text-mono">09:15 น.</div></td>
+                    <td><div class="font-600">Pro</div><div class="text-muted text-sm">1,500 + 150B</div></td>
+                    <td class="amount-pos text-mono">+1,650</td>
+                    <td class="text-mono">฿400.00</td>
+                    <td class="text-mono">฿28.00</td>
+                    <td class="text-mono text-primary font-600">฿428.00</td>
+                    <td class="text-sm">PromptPay</td>
+                    <td><span class="chip chip-green">✅ ชำระแล้ว</span></td>
+                    <td><button class="btn btn-sm btn-outline">ดู Invoice</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="text-mono text-muted text-sm">DEMO-2026-0201</span></td>
+                    <td><div>01 ก.พ. 2026</div><div class="text-muted text-sm text-mono">08:00 น.</div></td>
+                    <td><div class="font-600 text-muted">Demo Credit</div><div class="text-muted text-sm">—</div></td>
+                    <td class="amount-pos text-mono">+500</td>
+                    <td class="text-mono text-muted">—</td>
+                    <td class="text-mono text-muted">—</td>
+                    <td class="text-mono">฿0</td>
+                    <td class="text-sm">System</td>
+                    <td><span class="chip chip-orange">🎁 Demo</span></td>
+                    <td><span class="text-muted text-sm">—</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card mt-16" style="background:rgba(241,91,38,.04);border-color:var(--border-accent)">
+              <div class="text-sm text-muted" style="line-height:1.8">
+                ✅ Tax Invoice ออกอัตโนมัติทุกครั้งที่ชำระสำเร็จ<br>
+                📋 ใช้เป็นหลักฐานในการขอคืนภาษีมูลค่าเพิ่ม (VAT Refund)<br>
+                📧 รับสำเนาทาง Email ที่ลงทะเบียน (Optional)
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== RIGHT: Invoice Card ===== -->
+          <div class="inv-card" style="flex:0 0 520px">
+
+            <!-- Header: Brand + Doc Info -->
+            <div class="inv-head">
+              <div>
+                <div class="inv-brand-name">REALFACTAVATAR</div>
+                <div class="inv-brand-sub">บริษัท เรียลแฟคท์ เอไอ จำกัด</div>
+                <div class="inv-brand-sub">เลขประจำตัวผู้เสียภาษี: 0-1055-68005-12-3</div>
+                <div class="inv-brand-sub">123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กทม. 10110</div>
+              </div>
+              <div class="inv-doc-info">
+                <div class="inv-doc-title">TAX INVOICE</div>
+                <div class="inv-doc-title" style="font-size:13px;letter-spacing:1px;color:var(--text-muted)">ใบกำกับภาษี / ใบเสร็จรับเงิน</div>
+                <div class="inv-doc-num">INV-2026-0218-0042</div>
+                <div class="inv-doc-date">วันที่: 18 ก.พ. 2026 · 11:24 น.</div>
+                <div style="margin-top:6px"><span class="chip chip-green" style="font-size:12px">✅ ชำระแล้ว</span></div>
+              </div>
+            </div>
+
+            <!-- Parties -->
+            <div class="inv-parties">
+              <div class="inv-party">
+                <div class="inv-party-label"><i class="fa-solid fa-building" style="margin-right:4px"></i>ผู้ออกใบกำกับภาษี (Seller)</div>
+                <div class="inv-party-name">บริษัท เรียลแฟคท์ เอไอ จำกัด</div>
+                <div class="inv-party-detail">
+                  เลขประจำตัวผู้เสียภาษี: 0-1055-68005-12-3<br>
+                  123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย<br>
+                  กรุงเทพมหานคร 10110<br>
+                  โทร: 02-XXX-XXXX
+                </div>
+              </div>
+              <div class="inv-party">
+                <div class="inv-party-label"><i class="fa-solid fa-user-tie" style="margin-right:4px"></i>ออกให้แก่ (Bill To)</div>
+                <div class="inv-party-name">บริษัท เดโม คอร์ปอเรชั่น จำกัด</div>
+                <div class="inv-party-detail">
+                  เลขประจำตัวผู้เสียภาษี: 0-1055-XXXXX-XX-X<br>
+                  456 ถ.พระราม 9 แขวงห้วยขวาง<br>
+                  เขตห้วยขวาง กรุงเทพมหานคร 10310
+                </div>
+              </div>
+            </div>
+
+            <!-- Line Items -->
+            <table class="inv-items">
+              <thead>
+                <tr>
+                  <th style="width:36px">#</th>
+                  <th>รายการ / Description</th>
+                  <th style="width:60px;text-align:center">จำนวน</th>
+                  <th style="width:110px;text-align:right">ราคา/หน่วย</th>
+                  <th style="width:110px;text-align:right">รวม</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-muted">1</td>
+                  <td>
+                    <div class="inv-item-name">Business Package — Token Top-up</div>
+                    <div class="inv-item-desc">จำนวน Token: 5,000 + 750 Bonus · ไม่มีวันหมดอายุ</div>
+                    <div class="inv-item-desc">ช่องทาง: PromptPay (QR) · อ้างอิง: REF-20260218-1124</div>
+                  </td>
+                  <td class="text-mono" style="text-align:center">1</td>
+                  <td class="text-mono" style="text-align:right">฿1,000.00</td>
+                  <td class="text-mono" style="text-align:right">฿1,000.00</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Summary -->
+            <div class="inv-summary">
+              <div class="inv-summary-table">
+                <div class="inv-summary-row"><span class="isl">ราคาก่อนภาษี (Subtotal)</span><span class="isv">฿1,000.00</span></div>
+                <div class="inv-summary-row"><span class="isl">ภาษีมูลค่าเพิ่ม 7% (VAT)</span><span class="isv">฿70.00</span></div>
+                <div class="inv-summary-total"><span class="isl">ยอดชำระรวมภาษี</span><span class="isv">฿1,070.00</span></div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="inv-footer">
+              <div>
+                <div class="inv-footer-item"><i class="fa-solid fa-qrcode" style="margin-right:5px;color:var(--primary)"></i>ช่องทางชำระ: <strong>PromptPay (QR Code)</strong></div>
+                <div class="inv-footer-item">เลขอ้างอิง: <strong class="text-mono">REF-20260218-1124</strong></div>
+              </div>
+              <div class="inv-footer-item" style="text-align:right">
+                ออกโดยระบบอัตโนมัติ<br>ใบกำกับภาษีนี้ใช้ได้โดยไม่ต้องลงนาม
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- end .content -->
+  </div><!-- end .main -->
+</div><!-- end .app-shell -->
+
+<!-- ===== LOAD AVATAR MODAL ===== -->
+<div class="modal-overlay" id="loadAvatarModal">
+  <div class="modal" style="max-width:500px">
+    <button class="modal-close" onclick="closeLoadModal()">×</button>
+    <div class="modal-title">LOAD AVATAR</div>
+    <div class="modal-sub">เลือก Box ที่ต้องการ Bind Avatar Preset</div>
+
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Avatar ที่เลือก</div>
+    <div class="lm-avatar-summary" id="lmAvatarSummary"></div>
+
+    <div style="font-size:12px;color:var(--text-muted);margin:16px 0 8px;text-transform:uppercase;letter-spacing:1px">เลือก Box</div>
+    <div class="lm-box-list">
+      <div class="lm-box-row selected" onclick="selectLoadBox(this,'Box-A')">
+        <div class="lm-box-radio"></div>
+        <div style="flex:1">
+          <div class="lm-box-header">
+            <span class="lm-box-name">Box-A</span>
+            <span class="chip chip-orange"><i class="fa-solid fa-circle" style="font-size:7px"></i> SESSION ACTIVE</span>
+          </div>
+          <div class="lm-box-details">
+            <span><i class="fa-solid fa-location-dot"></i> Lobby 1F</span>
+            <span><i class="fa-solid fa-tv"></i> RFA-Pro · 65"</span>
+            <span><i class="fa-solid fa-robot"></i> Current: Aria</span>
+            <span><i class="fa-solid fa-clock-rotate-left"></i> 12 sessions วันนี้</span>
+          </div>
+        </div>
+      </div>
+      <div class="lm-box-row" onclick="selectLoadBox(this,'Box-B')">
+        <div class="lm-box-radio"></div>
+        <div style="flex:1">
+          <div class="lm-box-header">
+            <span class="lm-box-name">Box-B</span>
+            <span class="chip chip-gray">Standby</span>
+          </div>
+          <div class="lm-box-details">
+            <span><i class="fa-solid fa-location-dot"></i> Meeting Room 3F</span>
+            <span><i class="fa-solid fa-tv"></i> RFA-Lite · 43"</span>
+            <span><i class="fa-solid fa-robot"></i> Current: Nova</span>
+            <span><i class="fa-solid fa-clock-rotate-left"></i> 5 sessions วันนี้</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-outline" style="flex:1" onclick="closeLoadModal()">ยกเลิก</button>
+      <button class="btn btn-primary" style="flex:2" id="lmConfirmBtn" onclick="confirmLoad()">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Bind Avatar → Box-A
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAYMENT MODAL ===== -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closePayModal()">×</button>
+    <div class="modal-title">PAYMENT</div>
+    <div class="modal-sub">ยืนยันการซื้อ Token Package</div>
+    <div class="summary-box">
+      <div class="summary-row"><span class="sl">Package</span><span class="sv" id="payPkgName">Pro</span></div>
+      <div class="summary-row"><span class="sl">Token</span><span class="sv" id="payPkgTokens">1,500 + 150 bonus</span></div>
+      <div class="summary-row"><span class="sl">ราคา Package</span><span class="sv" id="payExVat">฿1,000</span></div>
+      <div class="summary-row"><span class="sl">+ VAT 7%</span><span class="sv" id="payVat">฿70</span></div>
+      <div class="summary-row total"><span class="sl">ยอดชำระ</span><span class="sv" id="payTotal">฿1,070</span></div>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">ช่องทางชำระเงิน</div>
+    <div class="payment-methods">
+      <div class="pay-method selected" onclick="selectPayMethod(this)"><div class="pay-method-icon">🏦</div><div><div class="pay-method-name">PromptPay (QR)</div><div class="pay-method-desc">สแกน QR ชำระทันที</div></div><div class="pay-method-radio"></div></div>
+      <div class="pay-method" onclick="selectPayMethod(this)"><div class="pay-method-icon">💳</div><div><div class="pay-method-name">Credit / Debit Card</div><div class="pay-method-desc">Visa, MasterCard, JCB</div></div><div class="pay-method-radio"></div></div>
+      <div class="pay-method" onclick="selectPayMethod(this)"><div class="pay-method-icon">🏛</div><div><div class="pay-method-name">โอนผ่านธนาคาร</div><div class="pay-method-desc">แนบสลิป · Admin อนุมัติ 1-2 ชม.</div></div><div class="pay-method-radio"></div></div>
+    </div>
+    <button class="btn btn-primary btn-lg" style="width:100%" onclick="doPayment()">ชำระเงิน ฿<span id="payBtnAmt">399.00</span> →</button>
+  </div>
+</div>
+
+<!-- ===== SUCCESS MODAL ===== -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal" style="text-align:center;padding:40px">
+    <div style="font-size:56px;margin-bottom:16px">✅</div>
+    <div class="modal-title" style="font-size:28px;display:flex;justify-content:center">ชำระเงินสำเร็จ!</div>
+    <div class="text-muted" style="margin:8px 0 24px">Token ถูกเพิ่มเข้า Wallet แล้ว พร้อมใช้ทุก Device</div>
+    <div style="background:var(--primary-dim);border:1px solid var(--border-accent);border-radius:12px;padding:16px;margin-bottom:24px">
+      <div class="text-muted text-sm mb-4">Token เพิ่มขึ้น</div>
+      <div style="font-family:var(--font-heading);font-size:40px;color:var(--primary);letter-spacing:3px" id="successTokenAmt">+1,650</div>
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="closeSuccessModal()">ดู e-Receipt</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="changePassModal">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="document.getElementById('changePassModal').classList.remove('open')">×</button>
+    <div class="modal-title">เปลี่ยนรหัสผ่าน</div>
+    <div class="modal-sub">ยืนยัน OTP ก่อนตั้งรหัสผ่านใหม่</div>
+    <div class="form-group">
+      <label class="form-label">รหัสผ่านเดิม</label>
+      <input type="password" class="form-input" placeholder="••••••••">
+    </div>
+    <div class="form-group">
+      <label class="form-label">รหัสผ่านใหม่</label>
+      <input type="password" class="form-input" placeholder="••••••••">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ยืนยันรหัสผ่านใหม่</label>
+      <input type="password" class="form-input" placeholder="••••••••">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-outline" style="flex:1" onclick="document.getElementById('changePassModal').classList.remove('open')">ยกเลิก</button>
+      <button class="btn btn-primary" style="flex:2"><i class="fa-solid fa-key"></i> ส่ง OTP & เปลี่ยนรหัส</button>
+    </div>
+  </div>
+</div>
+
+<script src="../backoffice-ui/js/mock-data.js"></script>
+<script src="../backoffice-ui/js/auth.js"></script>
+<script>
+/* ===== BACKOFFICE AUTH INTEGRATION ===== */
+(function() {
+  // Check if user came from backoffice with valid session
+  if (window.Auth) {
+    var restored = Auth.init();
+    if (restored && Auth.activeContext()) {
+      var ctx = Auth.activeContext();
+      // Only SP Admin / Member should be here
+      if (ctx.role === 'subplatform_admin' || ctx.role === 'subplatform_member') {
+        // Skip login screen
+        var loginEl = document.getElementById('loginScreen');
+        if (loginEl) loginEl.classList.add('hidden');
+        // Update user avatar initials in topbar
+        var user = Auth.currentUser();
+        if (user) {
+          var avEl = document.querySelector('.user-av');
+          if (avEl) avEl.textContent = user.initials;
+          avEl.title = user.name + ' (' + (ctx.role === 'subplatform_admin' ? 'SP Admin' : 'Member') + ')';
+        }
+      } else {
+        // Wrong role — redirect back to correct zone
+        Auth.redirectToZone(ctx.role);
+      }
+    }
+  }
+})();
+</script>
+<script>
+/* ===== DATA ===== */
+const DEV = {
+  'Box-A': {
+    loc:'Lobby 1F', avatar:'Aria', emoji:'🤖', role:'Product Expert', kb:'Product Catalog 2024', rate:15,
+    sessions:12, totalMin:84, totalTok:480, hasActive:true,
+    log:[
+      {id:'S-0217',start:'14:32',end:'—',     dur:'03:12',tok:48, avatar:'Aria',role:'Sales Assist',kb:'Product Catalog 2024',status:'active'},
+      {id:'S-0215',start:'13:50',end:'13:56', dur:'05:44',tok:86, avatar:'Aria',role:'Sales Assist',kb:'Product Catalog 2024',status:'done'},
+      {id:'S-0214',start:'13:22',end:'13:30', dur:'08:10',tok:122,avatar:'Aria',role:'Sales Assist',kb:'Product Catalog 2024',status:'done'},
+      {id:'S-0212',start:'12:05',end:'12:08', dur:'03:01',tok:46, avatar:'Aria',role:'Sales Assist',kb:'Product Catalog 2024',status:'done'},
+      {id:'S-0210',start:'11:30',end:'11:36', dur:'05:22',tok:81, avatar:'Aria',role:'Sales Assist',kb:'Product Catalog 2024',status:'done'},
+      {id:'S-0208',start:'10:44',end:'10:56', dur:'12:00',tok:180,avatar:'Aria',role:'Sales Assist',kb:'Product Catalog 2024',status:'done'},
+      {id:'S-0205',start:'10:02',end:'10:06', dur:'04:10',tok:63, avatar:'Aria',role:'Sales Assist',kb:'Product Catalog 2024',status:'done'},
+    ]
+  },
+  'Box-B': {
+    loc:'Meeting Room 3F', avatar:'Nova', emoji:'👩‍💼', role:'Receptionist', kb:'Company FAQ', rate:15,
+    sessions:5, totalMin:46, totalTok:200, hasActive:false,
+    log:[
+      {id:'S-0216',start:'14:15',end:'14:35', dur:'20:00',tok:300,avatar:'Nova',role:'Receptionist',kb:'Company FAQ',status:'done'},
+      {id:'S-0213',start:'12:44',end:'13:04', dur:'20:00',tok:300,avatar:'Nova',role:'Receptionist',kb:'Company FAQ',status:'done'},
+      {id:'S-0211',start:'10:02',end:'10:08', dur:'06:10',tok:92, avatar:'Nova',role:'Receptionist',kb:'Company FAQ',status:'done'},
+      {id:'S-0205',start:'09:15',end:'09:20', dur:'05:00',tok:75, avatar:'Nova',role:'Receptionist',kb:'Company FAQ',status:'done'},
+      {id:'S-0198',start:'08:42',end:'08:52', dur:'10:00',tok:150,avatar:'Nova',role:'Receptionist',kb:'Company FAQ',status:'done'},
+    ]
+  }
+};
+
+/* ===== LOGIN ===== */
+function setLoginTab(tab, btn) {
+  document.querySelectorAll('.tab-switch-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('loginTabEmail').style.display = tab==='email' ? '' : 'none';
+  document.getElementById('loginTabPhone').style.display = tab==='phone' ? '' : 'none';
+}
+function showOTP() { document.getElementById('otpSection').style.display = ''; }
+function doLogin() { document.getElementById('loginScreen').classList.add('hidden'); }
+function doLogout() {
+  // If logged in via Backoffice auth, clear session and redirect to login page
+  if (window.Auth && Auth.isAuthenticated()) {
+    Auth.logout();
+    return;
+  }
+  // Fallback: show local login screen
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('otpSection').style.display = 'none';
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+/* ===== SIDEBAR LOCK ===== */
+let sidebarLocked = false;
+const sidebar   = document.getElementById('sidebar');
+const mainArea  = document.getElementById('mainArea');
+const lockBtn   = document.getElementById('lockBtn');
+const lockLabel = document.getElementById('lockLabel');
+const lockIcon  = document.getElementById('lockIcon');
+const PATH_LOCKED   = `<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>`;
+const PATH_UNLOCKED = `<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>`;
+
+function toggleSidebarLock() {
+  sidebarLocked = !sidebarLocked;
+  sidebar.classList.toggle('locked', sidebarLocked);
+  mainArea.classList.toggle('sb-locked', sidebarLocked);
+  lockBtn.classList.toggle('is-locked', sidebarLocked);
+  lockLabel.textContent = sidebarLocked ? 'ปลดล็อก Sidebar' : 'ล็อก Sidebar';
+  lockIcon.innerHTML = sidebarLocked ? PATH_LOCKED : PATH_UNLOCKED;
+}
+
+/* ===== NAVIGATION ===== */
+const PAGE_NAMES = {
+  dashboard:'DASHBOARD', devices:'DEVICES', avatars:'AVATAR PRESETS',
+  wallet:'WALLET', history:'SESSION HISTORY', receipt:'e-RECEIPT'
+};
+function showPage(id, navBtn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navBtn) navBtn.classList.add('active');
+  else document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
+  });
+  document.getElementById('topbarPageName').textContent = PAGE_NAMES[id] || id.toUpperCase();
+}
+
+/* ===== DEVICE SELECTION ===== */
+function selectDevice(el, name, hasActive) {
+  document.querySelectorAll('.device-card').forEach(d => d.classList.remove('selected'));
+  el.classList.add('selected');
+  const d = DEV[name];
+  document.getElementById('activDeviceName').textContent = name;
+  document.getElementById('sessionPanelDeviceName').textContent = name;
+  document.getElementById('sessionPanel').style.display = '';
+  document.getElementById('todayCount').textContent = d.sessions;
+  document.getElementById('todayChip').textContent = d.sessions + ' sessions';
+  document.getElementById('todayTotalDur').textContent = d.totalMin + ' min';
+  document.getElementById('todayTotalTok').textContent = '-' + d.totalTok;
+  document.getElementById('todayAvgDur').textContent = Math.round(d.totalMin / d.sessions) + ' min';
+  document.getElementById('todayAvgTok').textContent = Math.round(d.totalTok / d.sessions);
+  document.getElementById('panelAvatarName').textContent = d.avatar;
+  document.getElementById('panelAvatarEmoji').textContent = d.emoji;
+  document.getElementById('panelAvatarRole').textContent = d.role;
+  document.getElementById('panelAvatarKb').textContent = 'KB: ' + d.kb;
+  document.getElementById('panelAvatarRate').textContent = 'Rate: ' + d.rate + ' tokens/min';
+  document.getElementById('logDeviceName').textContent = name;
+  document.getElementById('detailLogBody').innerHTML = d.log.map(s => {
+    const statusHtml = s.status === 'active'
+      ? `<span class="status-badge session"><div class="status-dot"></div>กำลัง Active</span>`
+      : `<span class="chip chip-green">✅ สำเร็จ</span>`;
+    return `<tr>
+      <td><span class="text-mono text-primary">${s.id}</span></td>
+      <td class="text-mono">${s.start}</td>
+      <td class="text-mono">${s.end}</td>
+      <td class="text-mono">${s.dur}</td>
+      <td><div class="font-600">${s.avatar}</div></td>
+      <td class="text-muted">${s.kb}</td>
+      <td class="text-muted">${s.role}</td>
+      <td>${statusHtml}</td>
+      <td class="amount-neg">-${s.tok}</td>
+      <td class="text-mono text-muted">${s.tok && s.dur ? (s.dur.split(':')[0]*60+parseInt(s.dur.split(':')[1]) > 0 ? Math.round(s.tok/((s.dur.split(':')[0]*60+parseInt(s.dur.split(':')[1]))/60)) : 15) : 15} tok/min</td>
+    </tr>`;
+  }).join('');
+  if (d.hasActive) {
+    document.getElementById('sessionActivePanel').style.display = '';
+    document.getElementById('sessionIdlePanel').style.display = 'none';
+    sessionSeconds = 192;
+    startSessionTimer();
+  } else {
+    document.getElementById('sessionActivePanel').style.display = 'none';
+    document.getElementById('sessionIdlePanel').style.display = '';
+    document.getElementById('idleAvatarName').textContent = d.avatar;
+    document.getElementById('idleKb').textContent = d.kb;
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  }
+}
+
+/* ===== SESSION TIMER ===== */
+let sessionSeconds = 192;
+let timerInterval  = null;
+let sessionIdCounter = 217;
+
+function startSessionTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    sessionSeconds++;
+    const m = Math.floor(sessionSeconds/60);
+    const s = sessionSeconds%60;
+    document.getElementById('sessionMin').textContent = String(m).padStart(2,'0');
+    document.getElementById('sessionSec').textContent = String(s).padStart(2,'0');
+    document.getElementById('sessionBar').style.width = Math.min((sessionSeconds/1200)*100, 100)+'%';
+    document.getElementById('tokConsumed').textContent = Math.floor(sessionSeconds/60*15);
+  }, 1000);
+}
+
+function startSession() {
+  sessionSeconds = 0;
+  sessionIdCounter++;
+  document.getElementById('activeSessionId').textContent = String(sessionIdCounter).padStart(4,'0');
+  document.getElementById('sessionActivePanel').style.display = '';
+  document.getElementById('sessionIdlePanel').style.display = 'none';
+  startSessionTimer();
+}
+
+function endSession() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  document.getElementById('sessionActivePanel').style.display = 'none';
+  document.getElementById('sessionIdlePanel').style.display = '';
+}
+
+/* ===== AVATAR ===== */
+function selectAvatar(el, name) {
+  document.querySelectorAll('.avatar-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+let selectedLoadBox = 'Box-A';
+function openLoadModal() {
+  const card = document.querySelector('.avatar-card.selected');
+  if (!card) return;
+  const name  = card.querySelector('.avatar-name').textContent;
+  const emoji = card.querySelector('.avatar-thumb').childNodes[0].textContent.trim();
+  const metas = [...card.querySelectorAll('.avatar-meta > div')].map(d => d.innerHTML).join('');
+  const rate  = card.querySelector('.rate-val').textContent.trim();
+  document.getElementById('lmAvatarSummary').innerHTML =
+    `<div class="lm-avatar-emoji">${emoji}</div>
+     <div style="flex:1">
+       <div class="lm-avatar-name">${name}</div>
+       <div class="lm-avatar-attrs">${metas}</div>
+       <div style="font-size:12px;color:var(--primary);font-family:var(--font-mono);margin-top:6px">
+         <i class="fa-solid fa-bolt"></i> ${rate}
+       </div>
+     </div>`;
+  selectedLoadBox = 'Box-A';
+  document.querySelectorAll('.lm-box-row').forEach((r,i) => r.classList.toggle('selected', i===0));
+  document.getElementById('lmConfirmBtn').innerHTML =
+    `<i class="fa-solid fa-wand-magic-sparkles"></i> Bind "${name}" → ${selectedLoadBox}`;
+  document.getElementById('loadAvatarModal').classList.add('open');
+}
+function closeLoadModal() { document.getElementById('loadAvatarModal').classList.remove('open'); }
+function selectLoadBox(el, boxKey) {
+  document.querySelectorAll('.lm-box-row').forEach(r => r.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedLoadBox = boxKey;
+  const name = document.querySelector('.avatar-card.selected .avatar-name').textContent;
+  document.getElementById('lmConfirmBtn').innerHTML =
+    `<i class="fa-solid fa-wand-magic-sparkles"></i> Bind "${name}" → ${boxKey}`;
+}
+function confirmLoad() { closeLoadModal(); }
+
+/* ===== PAYMENT ===== */
+const fmt = n => n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+let currentPkg = {};
+function openPayModal(tokens, exVat, name, bonus) {
+  const vatAmt = Math.round(exVat * 0.07 * 100) / 100;
+  const incVat = Math.round((exVat + vatAmt) * 100) / 100;
+  currentPkg = { tokens, exVat, vatAmt, incVat, name, bonus };
+  document.getElementById('payPkgName').textContent   = name + ' Package';
+  document.getElementById('payPkgTokens').textContent = tokens.toLocaleString() + (bonus ? ` + ${bonus.toLocaleString()} bonus` : '');
+  document.getElementById('payExVat').textContent     = '฿' + fmt(exVat);
+  document.getElementById('payVat').textContent       = '฿' + fmt(vatAmt);
+  document.getElementById('payTotal').textContent     = '฿' + fmt(incVat);
+  document.getElementById('payBtnAmt').textContent    = fmt(incVat);
+  document.getElementById('payModal').classList.add('open');
+}
+function closePayModal() { document.getElementById('payModal').classList.remove('open'); }
+function selectPayMethod(el) {
+  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function doPayment() {
+  closePayModal();
+  const total = currentPkg.tokens + (currentPkg.bonus||0);
+  document.getElementById('successTokenAmt').textContent = '+' + total.toLocaleString();
+  document.getElementById('successModal').classList.add('open');
+  document.getElementById('walletBalance').textContent = (2450 + total).toLocaleString();
+}
+function closeSuccessModal() {
+  document.getElementById('successModal').classList.remove('open');
+  showPage('receipt', null);
+}
+
+/* ===== OTP ===== */
+document.querySelectorAll('.otp-input').forEach((inp, i, arr) => {
+  inp.addEventListener('input', () => { if (inp.value && i < arr.length-1) arr[i+1].focus(); });
+});
+
+/* ===== AVATAR VIEW SWITCHER ===== */
+function switchAvatarView(viewId) {
+  document.getElementById('avatarGalleryView').style.display = viewId === 'avatarGalleryView' ? '' : 'none';
+  document.getElementById('assignLogView').style.display   = viewId === 'assignLogView'   ? '' : 'none';
+  document.getElementById('vbtnGallery').className = viewId === 'avatarGalleryView' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+  document.getElementById('vbtnLog').className     = viewId === 'assignLogView'     ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+}
+
+/* ===== TRANSACTION FILTER ===== */
+function filterTxn(btn, type) {
+  document.querySelectorAll('#txnFilters .chip').forEach(c => {
+    c.className = c === btn ? 'chip chip-blue' : 'chip chip-gray';
+  });
+  document.querySelectorAll('#txnTable tr[data-type]').forEach(r => {
+    r.style.display = (type === 'all' || r.dataset.type === type) ? '' : 'none';
+  });
+}
+
+/* ===== THEME TOGGLE ===== */
+function setTheme(mode) {
+  const isLight = mode === 'light';
+  document.body.classList.toggle('light-mode', isLight);
+  const toggleBtn = document.getElementById('themeToggleBtn');
+  if (toggleBtn) toggleBtn.textContent = isLight ? '☀️' : '🌙';
+  const darkBtn  = document.getElementById('settingsDarkBtn');
+  const lightBtn = document.getElementById('settingsLightBtn');
+  if (darkBtn)  darkBtn.className  = isLight ? 'btn btn-outline btn-sm' : 'btn btn-primary btn-sm';
+  if (lightBtn) lightBtn.className = isLight ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+  localStorage.setItem('rfaTheme', mode);
+}
+function toggleTheme() {
+  setTheme(document.body.classList.contains('light-mode') ? 'dark' : 'light');
+}
+(function(){
+  if (localStorage.getItem('rfaTheme') === 'light') setTheme('light');
+})();
+</script>
+</body>
+</html>
