@@ -829,6 +829,11 @@ window.Auth = (function () {
             demoRows +
           '</div>' +
         '</div>' +
+        '<div class="login-last-updated" style="text-align:center;margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">' +
+          '<span class="text-xs text-dim" style="font-size:10px;opacity:.6;">' +
+            '<i class="fa-solid fa-clock-rotate-left" style="margin-right:4px;"></i>Last Updated: 14 March 2026' +
+          '</span>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }
