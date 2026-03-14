@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RealfactAI - Backoffice</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6.5.1 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Favicon (swapped by theme toggle) -->
+  <link id="favicon" rel="icon" type="image/svg+xml" href="assets/Favicon-DarkMode.svg">
+
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <!-- Login Overlay (Auth) -->
+  <div id="login-overlay" class="hidden"></div>
+
+  <div class="app-layout">
+    <!-- ═══ SIDEBAR ═══ -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <img id="brand-logo-img" src="assets/Favicon-DarkMode.svg" alt="RealFact" style="width:36px;height:36px;object-fit:contain;flex-shrink:0;">
+        <span class="brand-text">REALFACT</span>
+      </div>
+
+      <div class="nav-items">
+        <!-- ══ PLATFORM — Central Backoffice ══ -->
+        <div class="nav-group" data-context="backoffice">
+          <div class="nav-section">
+            <i class="fa-solid fa-building nav-section-icon"></i>
+            <span class="nav-section-label">PLATFORM</span>
+          </div>
+          <a href="#dashboard" class="nav-item active" data-page="dashboard">
+            <i class="fa-solid fa-chart-line"></i>
+            <span class="nav-label">Dashboard</span>
+          </a>
+          <a href="#sub-platforms" class="nav-item" data-page="sub-platforms">
+            <i class="fa-solid fa-layer-group"></i>
+            <span class="nav-label">Sub-Platforms</span>
+          </a>
+          <a href="#tenants" class="nav-item" data-page="tenants">
+            <i class="fa-solid fa-users"></i>
+            <span class="nav-label">Tenants</span>
+          </a>
+          <div class="nav-group-header has-sub" data-toggle="cost-sub">
+            <i class="fa-solid fa-calculator"></i>
+            <span class="nav-label">Cost & Pricing</span>
+            <span class="nav-badge hidden" id="badge-parent-cost">0</span>
+            <i class="fa-solid fa-chevron-down nav-chevron"></i>
+          </div>
+          <div class="nav-sub-group" id="cost-sub">
+            <a href="#cost-pricing" class="nav-item nav-sub" data-page="cost-pricing">
+              <i class="fa-solid fa-minus"></i>
+              <span class="nav-label">Cost Configuration</span>
+            </a>
+            <a href="#cost-margin" class="nav-item nav-sub" data-page="cost-margin">
+              <i class="fa-solid fa-minus"></i>
+              <span class="nav-label">Margin Config</span>
+            </a>
+            <a href="#cost-snapshots" class="nav-item nav-sub" data-page="cost-snapshots">
+              <i class="fa-solid fa-minus"></i>
+              <span class="nav-label">Snapshots</span>
+            </a>
+            <a href="#cost-change-requests" class="nav-item nav-sub" data-page="cost-change-requests">
+              <i class="fa-solid fa-minus"></i>
+              <span class="nav-label">Change Requests</span>
+              <span class="nav-badge hidden" id="badge-cost-change-requests">0</span>
+            </a>
+          </div>
+          <div class="nav-group-header has-sub" data-toggle="plans-sub">
+            <i class="fa-solid fa-tags"></i>
+            <span class="nav-label">Plans & Packages</span>
+            <i class="fa-solid fa-chevron-down nav-chevron"></i>
+          </div>
+          <div class="nav-sub-group" id="plans-sub">
+            <a href="#plans-packages" class="nav-item nav-sub" data-page="plans-packages">
+              <i class="fa-solid fa-minus"></i>
+              <span class="nav-label">Subscription Plans</span>
+            </a>
+            <a href="#plans-tokens" class="nav-item nav-sub" data-page="plans-tokens">
+              <i class="fa-solid fa-minus"></i>
+              <span class="nav-label">Token Packages</span>
+            </a>
+            <a href="#plans-bonus" class="nav-item nav-sub" data-page="plans-bonus">
+              <i class="fa-solid fa-minus"></i>
+              <span class="nav-label">Welcome Bonus</span>
+            </a>
+          </div>
+          <div class="nav-group-header has-sub" data-toggle="billing-sub">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            <span class="nav-label">Billing</span>
+            <span class="nav-badge hidden" id="badge-parent-billing">0</span>
+            <i class="fa-solid fa-chevron-down nav-chevron"></i>
+          </div>
+          <div class="nav-sub-group" id="billing-sub">
+            <a href="#billing" class="nav-item nav-sub" data-page="billing">
+              <i class="fa-solid fa-minus"></i>
+              <span class="nav-label">Overview & Invoices</span>
+            </a>
+            <a href="#billing-verify" class="nav-item nav-sub" data-page="billing-verify">
+              <i class="fa-solid fa-minus"></i>
+              <span class="nav-label">ตรวจสอบการชำระ</span>
+              <span class="nav-badge hidden" id="badge-billing-verify">0</span>
+            </a>
+            <a href="#billing-credit" class="nav-item nav-sub" data-page="billing-credit">
+              <i class="fa-solid fa-minus"></i>
+              <span class="nav-label">Credit & Refunds</span>
+              <span class="nav-badge hidden" id="badge-billing-credit">0</span>
+            </a>
+            <a href="#billing-overdue" class="nav-item nav-sub" data-page="billing-overdue">
+              <i class="fa-solid fa-minus"></i>
+              <span class="nav-label">ค้างชำระ</span>
+              <span class="nav-badge hidden" id="badge-billing-overdue">0</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- ══ SETTINGS — Global Platform Config ══ -->
+        <div class="nav-group" data-context="backoffice">
+          <div class="nav-section">
+            <i class="fa-solid fa-sliders nav-section-icon"></i>
+            <span class="nav-section-label">SETTINGS</span>
+          </div>
+          <a href="#payment-settings" class="nav-item" data-page="payment-settings">
+            <i class="fa-solid fa-building-columns"></i>
+            <span class="nav-label">Payment Settings</span>
+          </a>
+          <a href="#platform-members" class="nav-item" data-page="platform-members">
+            <i class="fa-solid fa-users-gear"></i>
+            <span class="nav-label">Platform Members</span>
+          </a>
+        </div>
+
+        <!-- ══ ANALYTICS — Platform Reports ══ -->
+        <div class="nav-group" data-context="backoffice">
+          <div class="nav-section">
+            <i class="fa-solid fa-chart-column nav-section-icon"></i>
+            <span class="nav-section-label">ANALYTICS</span>
+          </div>
+          <a href="#analytics-revenue" class="nav-item" data-page="analytics-revenue">
+            <i class="fa-solid fa-baht-sign"></i>
+            <span class="nav-label">Revenue & Billing</span>
+          </a>
+          <a href="#analytics-usage" class="nav-item" data-page="analytics-usage">
+            <i class="fa-solid fa-bolt"></i>
+            <span class="nav-label">API Usage</span>
+          </a>
+          <a href="#analytics-customers" class="nav-item" data-page="analytics-customers">
+            <i class="fa-solid fa-users-rectangle"></i>
+            <span class="nav-label">Customers & Services</span>
+          </a>
+        </div>
+
+        <!-- ══ AVATAR — Sub-Platform Modules ══ -->
+        <div class="nav-group" data-context="avatar">
+          <div class="nav-section">
+            <i class="fa-solid fa-robot nav-section-icon"></i>
+            <span class="nav-section-label">AVATAR</span>
+          </div>
+          <a href="#avatar-dashboard" class="nav-item" data-page="avatar-dashboard">
+            <i class="fa-solid fa-chart-line"></i>
+            <span class="nav-label">Dashboard</span>
+          </a>
+          <a href="#avatar-tenants" class="nav-item" data-page="avatar-tenants">
+            <i class="fa-solid fa-building-user"></i>
+            <span class="nav-label">Tenants</span>
+          </a>
+          <a href="#hardware" class="nav-item" data-page="hardware">
+            <i class="fa-solid fa-warehouse"></i>
+            <span class="nav-label">Hardware</span>
+          </a>
+          <a href="#devices" class="nav-item" data-page="devices">
+            <i class="fa-solid fa-display"></i>
+            <span class="nav-label">Devices</span>
+          </a>
+          <a href="#service-builder" class="nav-item" data-page="service-builder">
+            <i class="fa-solid fa-link"></i>
+            <span class="nav-label">Assign Avatar</span>
+          </a>
+          <a href="#knowledge-base" class="nav-item" data-page="knowledge-base">
+            <i class="fa-solid fa-book"></i>
+            <span class="nav-label">Knowledge Base</span>
+          </a>
+        </div>
+
+        <!-- ══ DEVELOPER PORTAL — API Management ══ -->
+        <div class="nav-group" data-context="devportal">
+          <div class="nav-section">
+            <i class="fa-solid fa-code nav-section-icon"></i>
+            <span class="nav-section-label">DEVELOPER PORTAL</span>
+          </div>
+          <a href="#dp-dashboard" class="nav-item" data-page="dp-dashboard">
+            <i class="fa-solid fa-chart-line"></i>
+            <span class="nav-label">Dashboard</span>
+          </a>
+          <a href="#dp-tenants" class="nav-item" data-page="dp-tenants">
+            <i class="fa-solid fa-building-user"></i>
+            <span class="nav-label">Tenants</span>
+          </a>
+          <a href="#dp-api-presets" class="nav-item" data-page="dp-api-presets">
+            <i class="fa-solid fa-puzzle-piece"></i>
+            <span class="nav-label">API Presets</span>
+          </a>
+          <a href="#dp-assign-endpoint" class="nav-item" data-page="dp-assign-endpoint">
+            <i class="fa-solid fa-link"></i>
+            <span class="nav-label">Assign Endpoint</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="nav-item" id="sidebar-lock">
+          <i class="fa-solid fa-thumbtack"></i>
+          <span class="nav-label">Lock Sidebar</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ═══ MAIN AREA ═══ -->
+    <div class="main-area">
+      <!-- Topbar -->
+      <header class="topbar" id="topbar">
+        <div class="topbar-left">
+          <!-- Context Switcher -->
+          <div class="ctx-switcher" id="ctx-switcher">
+            <button class="ctx-switcher-btn" id="ctx-switcher-btn">
+              <div class="ctx-switcher-icon" id="ctx-icon">
+                <i class="fa-solid fa-building"></i>
+              </div>
+              <div class="ctx-switcher-text">
+                <span class="ctx-switcher-label" id="ctx-label">Central Backoffice</span>
+                <span class="ctx-switcher-sub" id="ctx-sub">Platform Management</span>
+              </div>
+              <i class="fa-solid fa-chevron-down ctx-switcher-arrow" id="ctx-arrow"></i>
+            </button>
+            <div class="ctx-dropdown" id="ctx-dropdown">
+              <div class="ctx-dropdown-item" data-ctx="backoffice">
+                <div class="ctx-dropdown-icon"><i class="fa-solid fa-building"></i></div>
+                <div class="ctx-dropdown-info">
+                  <span class="ctx-dropdown-name">Central Backoffice</span>
+                  <span class="ctx-dropdown-desc">Sub-Platforms, Tenants, Cost & Billing</span>
+                </div>
+                <i class="fa-solid fa-check ctx-dropdown-check"></i>
+              </div>
+              <div class="ctx-dropdown-item" data-ctx="avatar">
+                <div class="ctx-dropdown-icon avatar-icon"><i class="fa-solid fa-robot"></i></div>
+                <div class="ctx-dropdown-info">
+                  <span class="ctx-dropdown-name">RealFact Avatar</span>
+                  <span class="ctx-dropdown-desc">Hardware · Devices · Assign Avatar · KB · Defaults</span>
+                </div>
+                <i class="fa-solid fa-check ctx-dropdown-check"></i>
+              </div>
+              <div class="ctx-dropdown-item" data-ctx="devportal">
+                <div class="ctx-dropdown-icon" style="background:var(--surface-2);"><i class="fa-solid fa-code"></i></div>
+                <div class="ctx-dropdown-info">
+                  <span class="ctx-dropdown-name">Developer Portal</span>
+                  <span class="ctx-dropdown-desc">API Presets · Assign Endpoint · Tenants · Credit Line</span>
+                </div>
+                <i class="fa-solid fa-check ctx-dropdown-check"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="topbar-divider"></div>
+          <span class="topbar-page text-muted" id="page-title">Dashboard</span>
+        </div>
+        <div class="topbar-right">
+          
+          <button class="topbar-btn" id="theme-toggle" title="Toggle Theme">
+            <span id="theme-icon">&#127769;</span>
+          </button>
+          <button class="topbar-btn" id="notification-btn" title="Notifications">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notification-dot"></span>
+          </button>
+          <div class="user-profile-wrap" id="user-profile-wrap">
+            <div class="user-avatar" id="user-profile-btn" title="Admin">SA</div>
+            <span class="user-display-name" id="user-display-name">Admin</span>
+            <span class="chip chip-orange" id="user-role-badge" style="font-size:10px;">Owner</span>
+            <span class="text-xs text-muted" id="user-context-badge" style="display:none;"></span>
+            <!-- Profile Dropdown -->
+            <div class="profile-dropdown" id="profile-dropdown">
+              <div class="profile-dropdown-header">
+                <div class="user-avatar" id="pd-avatar" style="width:40px;height:40px;font-size:15px;">SA</div>
+                <div>
+                  <div class="font-600" id="pd-name">Admin</div>
+                  <div class="mono text-xs text-muted" id="pd-email">admin@realfact.ai</div>
+                  <div id="pd-role" style="margin-top:3px;"><span class="chip chip-orange" style="font-size:9px;">Owner</span></div>
+                </div>
+              </div>
+              <!-- Active Tenant Context -->
+              <div id="pd-context-section" style="padding:8px 14px;background:var(--surface2);border-radius:8px;margin:8px 10px 4px;">
+                <div class="text-xs text-muted" style="margin-bottom:4px;"><i class="fa-solid fa-building"></i> Tenant ปัจจุบัน</div>
+                <div class="font-600 text-sm" id="pd-context">All Tenants</div>
+              </div>
+              <div class="profile-dropdown-divider"></div>
+              <button class="profile-dropdown-item" id="pd-switch-context">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> สลับ Tenant
+              </button>
+              <button class="profile-dropdown-item" id="pd-account-settings">
+                <i class="fa-solid fa-gear"></i> ตั้งค่าบัญชี
+              </button>
+              <div class="profile-dropdown-divider"></div>
+              <button class="profile-dropdown-item profile-dropdown-danger" id="pd-logout">
+                <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <main class="content" id="content">
+        <!-- Pages render here via JS -->
+      </main>
+    </div>
+  </div>
+
+  <!-- ═══ SCRIPTS ═══ -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="js/mock-data.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/pages/dashboard.js"></script>
+  <script src="js/pages/avatar-dashboard.js"></script>
+  <script src="js/pages/avatar-tenants.js"></script>
+  <script src="js/pages/hardware.js"></script>
+  <script src="js/pages/devices.js"></script>
+  <script src="js/pages/service-builder.js"></script>
+  <script src="js/pages/knowledge-base.js"></script>
+  <script src="js/pages/tenants.js"></script>
+  <script src="js/pages/billing.js"></script>
+  <script src="js/pages/sub-platforms.js"></script>
+  <script src="js/pages/avatar-settings.js"></script>
+  <script src="js/pages/cost-pricing.js"></script>
+  <script src="js/pages/plans-packages.js"></script>
+  <script src="js/pages/payment-settings.js"></script>
+  <script src="js/pages/platform-members.js"></script>
+  <script src="js/pages/dashboard-analytics.js"></script>
+  <script src="js/pages/devportal-dashboard.js"></script>
+  <script src="js/pages/devportal-tenants.js"></script>
+  <script src="js/pages/devportal-api-presets.js"></script>
+  <script src="js/pages/devportal-assign-endpoint.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

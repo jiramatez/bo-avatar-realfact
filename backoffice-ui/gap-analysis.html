@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gap Analysis — Backoffice UI vs PRD</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Thai', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            border: 'hsl(240 3.7% 15.9%)',
+            input: 'hsl(240 3.7% 15.9%)',
+            ring: 'hsl(24 95% 53%)',
+            background: 'hsl(240 10% 3.9%)',
+            foreground: 'hsl(0 0% 98%)',
+            primary: { DEFAULT: 'hsl(24 95% 53%)', foreground: 'hsl(0 0% 100%)' },
+            secondary: { DEFAULT: 'hsl(240 3.7% 15.9%)', foreground: 'hsl(0 0% 98%)' },
+            muted: { DEFAULT: 'hsl(240 3.7% 15.9%)', foreground: 'hsl(240 5% 64.9%)' },
+            accent: { DEFAULT: 'hsl(240 3.7% 15.9%)', foreground: 'hsl(0 0% 98%)' },
+            destructive: { DEFAULT: 'hsl(0 62.8% 30.6%)', foreground: 'hsl(0 0% 98%)' },
+            card: { DEFAULT: 'hsl(240 10% 3.9%)', foreground: 'hsl(0 0% 98%)' },
+            ok: '#22c55e',
+            warn: '#f59e0b',
+            crit: '#ef4444',
+            info: '#3b82f6',
+            avatar: '#8b5cf6',
+            central: '#0ea5e9',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { scrollbar-width: thin; scrollbar-color: hsl(240 3.7% 22%) transparent; }
+    body { background: hsl(240 10% 3.9%); }
+    .card { background: hsl(240 6% 7%); border: 1px solid hsl(240 3.7% 15.9%); border-radius: 0.75rem; }
+    .card-accent-avatar { border-top: 2px solid #8b5cf6; }
+    .card-accent-central { border-top: 2px solid #0ea5e9; }
+    .card-accent-connect { border-top: 2px solid #f59e0b; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.025em; text-transform: uppercase; }
+    .badge-ok { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .badge-partial { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .badge-missing { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .badge-demo { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .badge-avatar { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .badge-central { background: rgba(14,165,233,0.15); color: #0ea5e9; }
+    .badge-connect { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .progress-bar { height: 8px; border-radius: 4px; background: hsl(240 3.7% 15.9%); overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+    .connector-line { position: relative; }
+    .connector-line::before { content: ''; position: absolute; left: 50%; top: -12px; width: 2px; height: 12px; background: hsl(240 3.7% 22%); }
+    .glow-avatar { box-shadow: 0 0 20px rgba(139,92,246,0.1); }
+    .glow-central { box-shadow: 0 0 20px rgba(14,165,233,0.1); }
+    .glow-warn { box-shadow: 0 0 20px rgba(245,158,11,0.1); }
+    .tab-btn { padding: 8px 16px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+    .tab-btn.active { background: hsl(240 3.7% 15.9%); color: white; border-color: hsl(240 3.7% 22%); }
+    .tab-btn:not(.active) { color: hsl(240 5% 64.9%); }
+    .tab-btn:not(.active):hover { color: white; background: hsl(240 3.7% 12%); }
+    .feature-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; padding: 8px 12px; border-bottom: 1px solid hsl(240 3.7% 12%); align-items: center; }
+    .feature-row:last-child { border-bottom: none; }
+    .feature-row:hover { background: hsl(240 3.7% 10%); }
+    .arch-box { border: 1px solid hsl(240 3.7% 22%); border-radius: 8px; padding: 12px 16px; text-align: center; font-size: 0.75rem; }
+    .arch-arrow { color: hsl(240 5% 44%); font-size: 1.2rem; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-in { animation: fadeIn 0.4s ease forwards; }
+    .section-anchor { scroll-margin-top: 80px; }
+    .sticky-nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(12px); background: hsla(240,10%,3.9%,0.85); }
+    @media print { .sticky-nav, .no-print { display: none !important; } body { background: white; color: black; } .card { border-color: #ddd; background: #fafafa; } }
+  </style>
+</head>
+<body class="text-foreground font-sans antialiased">
+
+  <!-- ═══ STICKY NAV ═══ -->
+  <nav class="sticky-nav border-b border-border px-6 py-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm">RF</div>
+        <span class="font-semibold text-sm">Gap Analysis</span>
+        <span class="text-muted-foreground text-xs">Backoffice UI vs PRD</span>
+      </div>
+      <div class="flex items-center gap-2 text-xs no-print">
+        <a href="#overview" class="tab-btn active" onclick="scrollNav(this)">Overview</a>
+        <a href="#avatar" class="tab-btn" onclick="scrollNav(this)">Avatar</a>
+        <a href="#central" class="tab-btn" onclick="scrollNav(this)">Central</a>
+        <a href="#connections" class="tab-btn" onclick="scrollNav(this)">Connections</a>
+        <a href="#matrix" class="tab-btn" onclick="scrollNav(this)">Matrix</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-6 py-8 space-y-10">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 0: HEADER -->
+    <!-- ═══════════════════════════════════════════ -->
+    <header class="text-center space-y-3 animate-in">
+      <h1 class="text-3xl font-bold tracking-tight">Backoffice UI — Gap Analysis Report</h1>
+      <p class="text-muted-foreground text-sm max-w-2xl mx-auto">
+        เปรียบเทียบสถานะปัจจุบันของ <code class="text-avatar font-mono text-xs bg-avatar/10 px-1.5 py-0.5 rounded">backoffice-ui/</code> กับ PRD 3 ฉบับ:
+        <code class="text-central font-mono text-xs bg-central/10 px-1.5 py-0.5 rounded">prd-pricing-multitenancy.md</code> +
+        <code class="text-avatar font-mono text-xs bg-avatar/10 px-1.5 py-0.5 rounded">prd-avatar-subplatform.md</code> +
+        <code class="text-central font-mono text-xs bg-central/10 px-1.5 py-0.5 rounded">prd-multitenancy_v1.md</code>
+      </p>
+      <p class="text-muted-foreground text-xs">Generated: 2026-03-02 | Version: 1.0</p>
+    </header>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 1: OVERVIEW -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="overview" class="section-anchor space-y-6">
+      <h2 class="text-xl font-semibold flex items-center gap-2">
+        <span class="w-1.5 h-6 rounded-full bg-primary inline-block"></span>
+        Executive Overview
+      </h2>
+
+      <!-- Summary Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="card p-4 text-center">
+          <div class="text-3xl font-bold text-foreground">8</div>
+          <div class="text-xs text-muted-foreground mt-1">Pages Implemented</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="text-3xl font-bold text-ok">~35%</div>
+          <div class="text-xs text-muted-foreground mt-1">Features Complete</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="text-3xl font-bold text-warn">~25%</div>
+          <div class="text-xs text-muted-foreground mt-1">Display-Only / Demo</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="text-3xl font-bold text-crit">~40%</div>
+          <div class="text-xs text-muted-foreground mt-1">Missing Entirely</div>
+        </div>
+      </div>
+
+      <!-- Overall Progress -->
+      <div class="card p-5 space-y-4">
+        <div class="flex items-center justify-between text-sm">
+          <span class="font-medium">Overall Implementation Progress</span>
+          <span class="text-muted-foreground font-mono text-xs">~35% of PRD scope</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:35%; background: linear-gradient(90deg, #22c55e 0%, #f59e0b 60%, #ef4444 100%);"></div>
+        </div>
+        <div class="flex gap-4 text-xs text-muted-foreground">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-ok inline-block"></span> Fully Implemented</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-warn inline-block"></span> Display-only / Demo Alert</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-crit inline-block"></span> Missing / No Handler</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-info inline-block"></span> Button UI Only</span>
+        </div>
+      </div>
+
+      <!-- Page Status Grid -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <div class="card p-4 card-accent-avatar glow-avatar space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-sm">Dashboard</span>
+            <span class="badge badge-ok">OK</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill bg-ok" style="width:90%"></div></div>
+          <div class="text-xs text-muted-foreground">Stats, Active Sessions, Quick Actions — Read-only display complete</div>
+        </div>
+
+        <div class="card p-4 card-accent-avatar glow-avatar space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-sm">Hardware</span>
+            <span class="badge badge-partial">Partial</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill bg-warn" style="width:45%"></div></div>
+          <div class="text-xs text-muted-foreground">Table + Search OK, Add Device demo, Bulk/Export/Sale/Activate missing</div>
+        </div>
+
+        <div class="card p-4 card-accent-avatar glow-avatar space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-sm">Devices</span>
+            <span class="badge badge-partial">Partial</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill bg-warn" style="width:40%"></div></div>
+          <div class="text-xs text-muted-foreground">Card display + Logs OK, Transfer/Assign/Heartbeat config missing</div>
+        </div>
+
+        <div class="card p-4 card-accent-avatar glow-avatar space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-sm">Service Builder</span>
+            <span class="badge badge-partial">Partial</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill bg-warn" style="width:40%"></div></div>
+          <div class="text-xs text-muted-foreground">Grid display OK, Create demo, Edit/Delete/Assign handlers missing</div>
+        </div>
+
+        <div class="card p-4 card-accent-avatar glow-avatar space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-sm">Knowledge Base</span>
+            <span class="badge badge-partial">Partial</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill bg-warn" style="width:35%"></div></div>
+          <div class="text-xs text-muted-foreground">KB grid + Doc viewer OK, Create/Edit/Upload/Delete missing</div>
+        </div>
+
+        <div class="card p-4 card-accent-central glow-central space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-sm">Tenants</span>
+            <span class="badge badge-partial">Partial</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill bg-warn" style="width:40%"></div></div>
+          <div class="text-xs text-muted-foreground">List + Detail OK, Suspend demo, RBAC/Pricing info/Export missing</div>
+        </div>
+
+        <div class="card p-4 card-accent-central glow-central space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-sm">Billing</span>
+            <span class="badge badge-partial">Partial</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill bg-warn" style="width:30%"></div></div>
+          <div class="text-xs text-muted-foreground">4-tab display OK, Approve demo, Credit Line/Refund/Collection missing</div>
+        </div>
+
+        <div class="card p-4 card-accent-central glow-central space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-sm">Sub-Platforms</span>
+            <span class="badge badge-partial">Partial</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill bg-warn" style="width:35%"></div></div>
+          <div class="text-xs text-muted-foreground">Cards + Cost/Margin display OK, Create demo, CRUD/Lifecycle missing</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 2: ARCHITECTURE DIAGRAM -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="space-y-6">
+      <h2 class="text-xl font-semibold flex items-center gap-2">
+        <span class="w-1.5 h-6 rounded-full bg-warn inline-block"></span>
+        System Architecture — 3-Layer Model
+      </h2>
+
+      <div class="card p-6 space-y-6">
+        <!-- Layer 1: Central Platform -->
+        <div class="border border-central/30 rounded-lg p-4 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="badge badge-central">Layer 1</span>
+            <span class="font-semibold text-central text-sm">Central Platform (RealFact)</span>
+            <span class="text-xs text-muted-foreground ml-auto">prd-pricing-multitenancy.md + prd-multitenancy_v1.md</span>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+            <div class="arch-box border-central/20 text-xs">
+              <div class="font-semibold text-central">Tenant Service</div>
+              <div class="text-muted-foreground mt-1">SSO / Identity / RBAC</div>
+            </div>
+            <div class="arch-box border-central/20 text-xs">
+              <div class="font-semibold text-central">M-BE-04</div>
+              <div class="text-muted-foreground mt-1">Customer (Admin)</div>
+            </div>
+            <div class="arch-box border-central/20 text-xs">
+              <div class="font-semibold text-central">M-BE-05</div>
+              <div class="text-muted-foreground mt-1">Cost Engine</div>
+            </div>
+            <div class="arch-box border-central/20 text-xs">
+              <div class="font-semibold text-central">M-BE-06</div>
+              <div class="text-muted-foreground mt-1">Price Engine</div>
+            </div>
+            <div class="arch-box border-central/20 text-xs">
+              <div class="font-semibold text-central">M-BE-07</div>
+              <div class="text-muted-foreground mt-1">Billing / Wallet</div>
+            </div>
+            <div class="arch-box border-central/20 text-xs">
+              <div class="font-semibold text-central">M-BE-12</div>
+              <div class="text-muted-foreground mt-1">Sub-Platform Mgmt</div>
+            </div>
+            <div class="arch-box border-central/20 text-xs">
+              <div class="font-semibold text-central">X-MT-01</div>
+              <div class="text-muted-foreground mt-1">Multi-Tenancy</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="flex justify-center"><span class="arch-arrow">&#11015;&#11015;&#11015; gRPC / JWT / Event &#11015;&#11015;&#11015;</span></div>
+
+        <!-- Layer 2: Sub-Platforms -->
+        <div class="border border-avatar/30 rounded-lg p-4 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="badge badge-avatar">Layer 2</span>
+            <span class="font-semibold text-avatar text-sm">Sub-Platform: Avatar (Live Interact)</span>
+            <span class="text-xs text-muted-foreground ml-auto">prd-avatar-subplatform.md</span>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div class="arch-box border-avatar/20 text-xs">
+              <div class="font-semibold text-avatar">Hardware Inv.</div>
+              <div class="text-muted-foreground mt-1">S/N + Register Code</div>
+            </div>
+            <div class="arch-box border-avatar/20 text-xs">
+              <div class="font-semibold text-avatar">Device Ops</div>
+              <div class="text-muted-foreground mt-1">Heartbeat / Session</div>
+            </div>
+            <div class="arch-box border-avatar/20 text-xs">
+              <div class="font-semibold text-avatar">Service Builder</div>
+              <div class="text-muted-foreground mt-1">Preset CRUD</div>
+            </div>
+            <div class="arch-box border-avatar/20 text-xs">
+              <div class="font-semibold text-avatar">Knowledge Base</div>
+              <div class="text-muted-foreground mt-1">RAG Pipeline</div>
+            </div>
+            <div class="arch-box border-avatar/20 text-xs">
+              <div class="font-semibold text-avatar">Avatar Defaults</div>
+              <div class="text-muted-foreground mt-1">Welcome Bonus / Default Preset</div>
+            </div>
+            <div class="arch-box border-avatar/20 text-xs">
+              <div class="font-semibold text-avatar">Onboarding</div>
+              <div class="text-muted-foreground mt-1">Setup Wizard</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="flex justify-center"><span class="arch-arrow">&#11015;&#11015;&#11015; JWT + active_tenant &#11015;&#11015;&#11015;</span></div>
+
+        <!-- Layer 3: Tenants -->
+        <div class="border border-border rounded-lg p-4">
+          <div class="flex items-center gap-2">
+            <span class="badge" style="background:rgba(255,255,255,0.08);color:#aaa;">Layer 3</span>
+            <span class="font-semibold text-sm">Tenants</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-3">
+            <div class="arch-box text-xs"><div class="font-medium">ABC Corp</div><div class="text-muted-foreground">Avatar + Booking</div></div>
+            <div class="arch-box text-xs"><div class="font-medium">XYZ Ltd</div><div class="text-muted-foreground">Avatar</div></div>
+            <div class="arch-box text-xs"><div class="font-medium">TechCorp</div><div class="text-muted-foreground">Avatar (Credit Line)</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 3: AVATAR SUB-PLATFORM GAP -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="avatar" class="section-anchor space-y-6">
+      <h2 class="text-xl font-semibold flex items-center gap-2">
+        <span class="w-1.5 h-6 rounded-full bg-avatar inline-block"></span>
+        Avatar Sub-Platform — Gap Analysis
+        <span class="badge badge-avatar ml-2">prd-avatar-subplatform.md</span>
+      </h2>
+
+      <!-- Hardware Inventory -->
+      <div class="card card-accent-avatar p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-sm">Hardware Inventory & Registration</h3>
+          <span class="font-mono text-xs text-muted-foreground">A-FR1 ~ A-FR17</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill bg-warn" style="width:35%"></div></div>
+
+        <div class="rounded-lg border border-border overflow-hidden text-xs">
+          <div class="feature-row font-semibold text-muted-foreground bg-secondary/50">
+            <span>Feature / FR</span><span>PRD Ref</span><span>Status</span>
+          </div>
+          <div class="feature-row"><span>Device Model Catalog CRUD</span><span class="font-mono text-muted-foreground">A-FR1~3</span><span class="badge badge-partial">Display Only</span></div>
+          <div class="feature-row"><span>Device table + Search + Filter (S/N, Code, Name, Status)</span><span class="font-mono text-muted-foreground">A-FR8~9</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Add Device modal (select Model + S/N + Name)</span><span class="font-mono text-muted-foreground">A-FR4</span><span class="badge badge-demo">Demo Alert</span></div>
+          <div class="feature-row"><span>Auto-generate Register Code (AV-XXXXXX)</span><span class="font-mono text-muted-foreground">A-FR4</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Bulk S/N Import (CSV)</span><span class="font-mono text-muted-foreground">A-FR5</span><span class="badge badge-missing">No Handler</span></div>
+          <div class="feature-row"><span>Record Sale (S/N + Tenant) + Bulk Sale</span><span class="font-mono text-muted-foreground">A-FR6</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Export CSV (S/N, Name, Model, Register Code)</span><span class="font-mono text-muted-foreground">A-FR7</span><span class="badge badge-missing">No Handler</span></div>
+          <div class="feature-row"><span>Edit Device Name</span><span class="font-mono text-muted-foreground">A-FR10</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Decommission Device</span><span class="font-mono text-muted-foreground">A-FR11</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Re-register Decommissioned Device</span><span class="font-mono text-muted-foreground">A-FR12</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Tenant Self-Activate (Web App, Register Code validation)</span><span class="font-mono text-muted-foreground">A-FR13,15,16</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Admin Activate Device (Backoffice)</span><span class="font-mono text-muted-foreground">A-FR14</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Device shows Register Code on screen pre-activate</span><span class="font-mono text-muted-foreground">A-FR17</span><span class="badge badge-missing">Missing</span></div>
+        </div>
+      </div>
+
+      <!-- Device Operations -->
+      <div class="card card-accent-avatar p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-sm">Device Operations</h3>
+          <span class="font-mono text-xs text-muted-foreground">A-FR18 ~ A-FR23</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill bg-warn" style="width:45%"></div></div>
+
+        <div class="rounded-lg border border-border overflow-hidden text-xs">
+          <div class="feature-row font-semibold text-muted-foreground bg-secondary/50">
+            <span>Feature / FR</span><span>PRD Ref</span><span>Status</span>
+          </div>
+          <div class="feature-row"><span>Activated Device card grid (Online/Offline badge)</span><span class="font-mono text-muted-foreground">A-FR19</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Session Log table (ID, Device, Preset, Duration, Tokens)</span><span class="font-mono text-muted-foreground">A-FR20,22</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Assign Log table (Timestamp, Device, Old/New Preset, Actor)</span><span class="font-mono text-muted-foreground">A-FR21,22</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Transfer Device between Tenants + audit log</span><span class="font-mono text-muted-foreground">A-FR18</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Heartbeat alert config (offline threshold)</span><span class="font-mono text-muted-foreground">US-AV.7</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Assign/Switch Preset to Device action</span><span class="font-mono text-muted-foreground">US-AV.13</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Tenant-isolated view (Tenant Admin sees own devices only)</span><span class="font-mono text-muted-foreground">A-FR23</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Session summary per Device per day</span><span class="font-mono text-muted-foreground">US-AV.8</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Date Range filter for Session/Assign logs</span><span class="font-mono text-muted-foreground">US-AV.8,9</span><span class="badge badge-missing">Missing</span></div>
+        </div>
+      </div>
+
+      <!-- Service Builder -->
+      <div class="card card-accent-avatar p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-sm">Service Builder / Preset Management</h3>
+          <span class="font-mono text-xs text-muted-foreground">A-FR24 ~ A-FR30</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill bg-warn" style="width:40%"></div></div>
+
+        <div class="rounded-lg border border-border overflow-hidden text-xs">
+          <div class="feature-row font-semibold text-muted-foreground bg-secondary/50">
+            <span>Feature / FR</span><span>PRD Ref</span><span>Status</span>
+          </div>
+          <div class="feature-row"><span>Preset card grid + Tab filtering (All/Assigned/Default)</span><span class="font-mono text-muted-foreground">A-FR24</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Preset detail modal (avatar, voice, agent, KB, assignments)</span><span class="font-mono text-muted-foreground">A-FR24</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Create Preset modal (form UI complete)</span><span class="font-mono text-muted-foreground">A-FR24</span><span class="badge badge-demo">Demo Only</span></div>
+          <div class="feature-row"><span>Edit Preset (handler)</span><span class="font-mono text-muted-foreground">A-FR24</span><span class="badge badge-missing">No Handler</span></div>
+          <div class="feature-row"><span>Delete Preset (handler + validation)</span><span class="font-mono text-muted-foreground">A-FR24</span><span class="badge badge-missing">No Handler</span></div>
+          <div class="feature-row"><span>Agent Inject Input field + System Prompt preview</span><span class="font-mono text-muted-foreground">A-FR25</span><span class="badge badge-partial">Field Only</span></div>
+          <div class="feature-row"><span>Multi-size Asset management per avatar</span><span class="font-mono text-muted-foreground">A-FR26</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Device Compatibility Tag per Preset</span><span class="font-mono text-muted-foreground">A-FR27</span><span class="badge badge-partial">Checkboxes Only</span></div>
+          <div class="feature-row"><span>Assign Preset to Tenant (slot limit enforcement)</span><span class="font-mono text-muted-foreground">A-FR28</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Set Suggested Preset per Tenant</span><span class="font-mono text-muted-foreground">A-FR29</span><span class="badge badge-partial">Display Only</span></div>
+          <div class="feature-row"><span>Preset API endpoints (GET /presets)</span><span class="font-mono text-muted-foreground">A-FR30</span><span class="badge badge-missing">No Backend</span></div>
+        </div>
+      </div>
+
+      <!-- Knowledge Base -->
+      <div class="card card-accent-avatar p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-sm">Knowledge Base (RAG)</h3>
+          <span class="font-mono text-xs text-muted-foreground">A-FR31 ~ A-FR36</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill bg-warn" style="width:30%"></div></div>
+
+        <div class="rounded-lg border border-border overflow-hidden text-xs">
+          <div class="feature-row font-semibold text-muted-foreground bg-secondary/50">
+            <span>Feature / FR</span><span>PRD Ref</span><span>Status</span>
+          </div>
+          <div class="feature-row"><span>KB card grid + stats (Total KBs, Docs, Chunks, Success %)</span><span class="font-mono text-muted-foreground">A-FR31</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Processing status alert banner</span><span class="font-mono text-muted-foreground">A-FR32</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>View Documents modal (file list + type icons)</span><span class="font-mono text-muted-foreground">A-FR33</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Create KB modal (form + drag-drop zone)</span><span class="font-mono text-muted-foreground">A-FR31</span><span class="badge badge-demo">Demo Only</span></div>
+          <div class="feature-row"><span>Edit KB (handler)</span><span class="font-mono text-muted-foreground">A-FR33</span><span class="badge badge-missing">Empty Handler</span></div>
+          <div class="feature-row"><span>Upload new Document to existing KB</span><span class="font-mono text-muted-foreground">A-FR33</span><span class="badge badge-missing">No Handler</span></div>
+          <div class="feature-row"><span>Delete Document from KB + Re-index</span><span class="font-mono text-muted-foreground">A-FR33</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Chunking + Embedding processing status (per doc)</span><span class="font-mono text-muted-foreground">A-FR32</span><span class="badge badge-partial">Static Bar</span></div>
+          <div class="feature-row"><span>Retry failed processing</span><span class="font-mono text-muted-foreground">EC-AV.18</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>KB Tenant isolation enforcement</span><span class="font-mono text-muted-foreground">A-FR36</span><span class="badge badge-missing">No Backend</span></div>
+        </div>
+      </div>
+
+      <!-- Avatar Defaults -->
+      <div class="card card-accent-avatar p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-sm">Avatar Defaults</h3>
+          <span class="font-mono text-xs text-muted-foreground">A-FR37 ~ A-FR40</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill bg-crit" style="width:15%"></div></div>
+
+        <div class="rounded-lg border border-border overflow-hidden text-xs">
+          <div class="feature-row font-semibold text-muted-foreground bg-secondary/50">
+            <span>Feature / FR</span><span>PRD Ref</span><span>Status</span>
+          </div>
+          <div class="feature-row"><span>Welcome Bonus Token config (amount, history log)</span><span class="font-mono text-muted-foreground">A-FR37</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Auto-grant Welcome Bonus on first subscribe</span><span class="font-mono text-muted-foreground">A-FR38</span><span class="badge badge-missing">No Backend</span></div>
+          <div class="feature-row"><span>System Default Preset selection UI</span><span class="font-mono text-muted-foreground">A-FR39</span><span class="badge badge-partial">Display Only</span></div>
+          <div class="feature-row"><span>Change System Default Preset (config)</span><span class="font-mono text-muted-foreground">A-FR40</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Token Deduction 3-tier priority (Sub &gt; Welcome &gt; Purchased)</span><span class="font-mono text-muted-foreground">Section 7</span><span class="badge badge-missing">No Backend</span></div>
+          <div class="feature-row"><span>Onboarding Flow wizard (steps 1-11)</span><span class="font-mono text-muted-foreground">Section 2</span><span class="badge badge-missing">Missing</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 4: CENTRAL PLATFORM GAP -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="central" class="section-anchor space-y-6">
+      <h2 class="text-xl font-semibold flex items-center gap-2">
+        <span class="w-1.5 h-6 rounded-full bg-central inline-block"></span>
+        Central Platform — Gap Analysis
+        <span class="badge badge-central ml-2">prd-pricing-multitenancy.md</span>
+      </h2>
+
+      <!-- Tenant Management -->
+      <div class="card card-accent-central p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-sm">Tenant & Identity Management (M-BE-04 + Tenant Service)</h3>
+          <span class="font-mono text-xs text-muted-foreground">FR1 ~ FR21</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill bg-warn" style="width:35%"></div></div>
+
+        <div class="rounded-lg border border-border overflow-hidden text-xs">
+          <div class="feature-row font-semibold text-muted-foreground bg-secondary/50">
+            <span>Feature / FR</span><span>PRD Ref</span><span>Status</span>
+          </div>
+          <div class="feature-row"><span>Tenant list table + Search + Plan/Status filter</span><span class="font-mono text-muted-foreground">FR16</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Tenant Detail modal (info, plan, members, balance)</span><span class="font-mono text-muted-foreground">FR16</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Token balance breakdown (bonus vs purchased)</span><span class="font-mono text-muted-foreground">FR16</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Suspend / Restore Tenant</span><span class="font-mono text-muted-foreground">FR18</span><span class="badge badge-demo">Demo Alert</span></div>
+          <div class="feature-row"><span>Edit Tenant info (Company, Contact)</span><span class="font-mono text-muted-foreground">FR17</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Soft-delete / Restore Tenant (Super Admin)</span><span class="font-mono text-muted-foreground">FR19</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>View Tenant Pricing Info (Snapshot, Custom/Default)</span><span class="font-mono text-muted-foreground">FR20</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Tenant Branding (White-Label V1: logo, theme, favicon)</span><span class="font-mono text-muted-foreground">FR21</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Export Tenant data (CSV)</span><span class="font-mono text-muted-foreground">US-AMT.4</span><span class="badge badge-demo">Demo Alert</span></div>
+          <div class="feature-row"><span>RBAC enforcement (hide menus by role)</span><span class="font-mono text-muted-foreground">FR9,10</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>SSO / Registration flow (Tenant Service)</span><span class="font-mono text-muted-foreground">FR1~3</span><span class="badge badge-missing">No Backend</span></div>
+          <div class="feature-row"><span>Hub Page (Sub-Platform switcher)</span><span class="font-mono text-muted-foreground">FR4,5</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Team Management (invite, roles, remove)</span><span class="font-mono text-muted-foreground">FR6~8</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Account Decommissioning (PDPA + OTP)</span><span class="font-mono text-muted-foreground">FR11</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Account lockout (5 fails = 30min)</span><span class="font-mono text-muted-foreground">FR12</span><span class="badge badge-missing">No Backend</span></div>
+        </div>
+      </div>
+
+      <!-- Sub-Platform Management -->
+      <div class="card card-accent-central p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-sm">Sub-Platform Management (M-BE-12)</h3>
+          <span class="font-mono text-xs text-muted-foreground">FR22 ~ FR27</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill bg-warn" style="width:35%"></div></div>
+
+        <div class="rounded-lg border border-border overflow-hidden text-xs">
+          <div class="feature-row font-semibold text-muted-foreground bg-secondary/50">
+            <span>Feature / FR</span><span>PRD Ref</span><span>Status</span>
+          </div>
+          <div class="feature-row"><span>Sub-Platform card display (stats, domain, color swatch)</span><span class="font-mono text-muted-foreground">FR22</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Create Sub-Platform modal (Name, Code, Domain)</span><span class="font-mono text-muted-foreground">FR22</span><span class="badge badge-demo">Demo Alert</span></div>
+          <div class="feature-row"><span>Manage modal — Details tab (read-only)</span><span class="font-mono text-muted-foreground">FR22</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Manage modal — Branding tab (logo, colors, favicon, template + live preview)</span><span class="font-mono text-muted-foreground">FR23</span><span class="badge badge-partial">Display Only</span></div>
+          <div class="feature-row"><span>Manage modal — Lifecycle tab (state flow visualization)</span><span class="font-mono text-muted-foreground">FR25</span><span class="badge badge-partial">Display Only</span></div>
+          <div class="feature-row"><span>Manage modal — Health tab (metrics)</span><span class="font-mono text-muted-foreground">FR26</span><span class="badge badge-partial">Mock Data</span></div>
+          <div class="feature-row"><span>Landing Page (public, plans + pricing)</span><span class="font-mono text-muted-foreground">FR24</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Branding upload handlers (logo/favicon)</span><span class="font-mono text-muted-foreground">FR23</span><span class="badge badge-missing">No Handler</span></div>
+          <div class="feature-row"><span>Lifecycle state transitions (precondition enforcement)</span><span class="font-mono text-muted-foreground">FR25</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Health Dashboard (real metrics via OTEL)</span><span class="font-mono text-muted-foreground">FR26</span><span class="badge badge-missing">No Backend</span></div>
+          <div class="feature-row"><span>Edit Sub-Platform details</span><span class="font-mono text-muted-foreground">US-AMT.1</span><span class="badge badge-missing">Missing</span></div>
+        </div>
+      </div>
+
+      <!-- Cost Management -->
+      <div class="card card-accent-central p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-sm">Cost Management (M-BE-05)</h3>
+          <span class="font-mono text-xs text-muted-foreground">FR28 ~ FR34</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill bg-crit" style="width:20%"></div></div>
+
+        <div class="rounded-lg border border-border overflow-hidden text-xs">
+          <div class="feature-row font-semibold text-muted-foreground bg-secondary/50">
+            <span>Feature / FR</span><span>PRD Ref</span><span>Status</span>
+          </div>
+          <div class="feature-row"><span>Cost Config table (Service Code, Billing Type, Cost/Unit)</span><span class="font-mono text-muted-foreground">FR28</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Edit Cost per Service Code</span><span class="font-mono text-muted-foreground">FR28</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Set Effective Date for cost change</span><span class="font-mono text-muted-foreground">FR29</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Cost Change Request + Approval workflow</span><span class="font-mono text-muted-foreground">FR30,31</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Cancel pending Cost Change Request</span><span class="font-mono text-muted-foreground">FR32</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Cost History (Immutable ledger)</span><span class="font-mono text-muted-foreground">FR33</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Exchange Rate config (THB V1.0)</span><span class="font-mono text-muted-foreground">FR34</span><span class="badge badge-missing">Missing</span></div>
+        </div>
+      </div>
+
+      <!-- Pricing & Subscription -->
+      <div class="card card-accent-central p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-sm">Pricing & Subscription (M-BE-06)</h3>
+          <span class="font-mono text-xs text-muted-foreground">FR35 ~ FR48</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill bg-crit" style="width:15%"></div></div>
+
+        <div class="rounded-lg border border-border overflow-hidden text-xs">
+          <div class="feature-row font-semibold text-muted-foreground bg-secondary/50">
+            <span>Feature / FR</span><span>PRD Ref</span><span>Status</span>
+          </div>
+          <div class="feature-row"><span>Margin display (Global %, Provider, Service Code)</span><span class="font-mono text-muted-foreground">FR35</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Subscription Plans display (Free/Starter/Pro cards)</span><span class="font-mono text-muted-foreground">FR44</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Triple Bidirectional Editing (Cost/Margin/Sell Price)</span><span class="font-mono text-muted-foreground">FR36</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Margin Change Request + Approval</span><span class="font-mono text-muted-foreground">FR37,38</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Default Snapshot (auto-generate)</span><span class="font-mono text-muted-foreground">FR39</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Custom Snapshot (B2B, immutable)</span><span class="font-mono text-muted-foreground">FR40</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Snapshot list + Assign/Unassign to Customer</span><span class="font-mono text-muted-foreground">FR41,42</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Price Lock (max 365d, auto-revert, notify 30/7/1d)</span><span class="font-mono text-muted-foreground">FR43</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Subscription Plan CRUD per Sub-Platform</span><span class="font-mono text-muted-foreground">FR44</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Plan Lifecycle (Draft / Active / Deprecated / Retired)</span><span class="font-mono text-muted-foreground">FR45</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Exchange Rate per Sub-Platform config</span><span class="font-mono text-muted-foreground">FR46</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Embedding Billing toggle per customer</span><span class="font-mono text-muted-foreground">FR47</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Margin Health Monitoring + Alerts</span><span class="font-mono text-muted-foreground">FR48</span><span class="badge badge-missing">Missing</span></div>
+        </div>
+      </div>
+
+      <!-- Billing & Payment -->
+      <div class="card card-accent-central p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-sm">Billing & Payment (M-BE-07)</h3>
+          <span class="font-mono text-xs text-muted-foreground">FR49 ~ FR95</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill bg-crit" style="width:25%"></div></div>
+
+        <div class="rounded-lg border border-border overflow-hidden text-xs">
+          <div class="feature-row font-semibold text-muted-foreground bg-secondary/50">
+            <span>Feature / FR</span><span>PRD Ref</span><span>Status</span>
+          </div>
+
+          <div class="feature-row bg-secondary/20"><span class="font-semibold text-muted-foreground" style="grid-column:1/-1;">Token & Wallet (FR49-FR55)</span></div>
+          <div class="feature-row"><span>Token balance display (topbar chip)</span><span class="font-mono text-muted-foreground">FR49</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Token balance detail (bonus vs purchased in Tenant modal)</span><span class="font-mono text-muted-foreground">FR49</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Token Top-up flow</span><span class="font-mono text-muted-foreground">FR50</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Token deduction (real-time + idempotent + order priority)</span><span class="font-mono text-muted-foreground">FR52,53</span><span class="badge badge-missing">No Backend</span></div>
+          <div class="feature-row"><span>Low balance notification (< 20%)</span><span class="font-mono text-muted-foreground">FR55</span><span class="badge badge-missing">Missing</span></div>
+
+          <div class="feature-row bg-secondary/20"><span class="font-semibold text-muted-foreground" style="grid-column:1/-1;">Subscription (FR56-FR61)</span></div>
+          <div class="feature-row"><span>Subscribe plan flow</span><span class="font-mono text-muted-foreground">FR56</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Upgrade plan (pro-rata calculation)</span><span class="font-mono text-muted-foreground">FR57</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Downgrade plan (extended days)</span><span class="font-mono text-muted-foreground">FR58</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Auto-renew + Grace Period (3d retry)</span><span class="font-mono text-muted-foreground">FR59,60</span><span class="badge badge-missing">Missing</span></div>
+
+          <div class="feature-row bg-secondary/20"><span class="font-semibold text-muted-foreground" style="grid-column:1/-1;">Invoice & Payment (FR62-FR70)</span></div>
+          <div class="feature-row"><span>Invoice table (ID, Tenant, Type, Amount, VAT, Status)</span><span class="font-mono text-muted-foreground">FR62</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Purchase Log table (cross-Tenant, cross-Sub-Platform)</span><span class="font-mono text-muted-foreground">FR88</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Payment Verification cards (slip placeholder)</span><span class="font-mono text-muted-foreground">FR69</span><span class="badge badge-ok">OK</span></div>
+          <div class="feature-row"><span>Approve / Reject Payment</span><span class="font-mono text-muted-foreground">FR69</span><span class="badge badge-demo">Demo Alert</span></div>
+          <div class="feature-row"><span>Invoice auto-generate (Thai law, VAT 7%)</span><span class="font-mono text-muted-foreground">FR62</span><span class="badge badge-missing">No Backend</span></div>
+          <div class="feature-row"><span>Receipt auto-generate</span><span class="font-mono text-muted-foreground">FR63</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Download Invoice/Receipt PDF</span><span class="font-mono text-muted-foreground">FR64</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>3-channel Payment (2C2P + Bank Transfer + Company QR)</span><span class="font-mono text-muted-foreground">FR65</span><span class="badge badge-missing">No Backend</span></div>
+          <div class="feature-row"><span>Bank account config (for receiving payments)</span><span class="font-mono text-muted-foreground">FR70</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Purchase Log drill-down (Tenant Detail, Transaction Detail)</span><span class="font-mono text-muted-foreground">FR90</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Purchase Log filter + search + export (CSV/PDF)</span><span class="font-mono text-muted-foreground">FR91</span><span class="badge badge-missing">Missing</span></div>
+
+          <div class="feature-row bg-secondary/20"><span class="font-semibold text-muted-foreground" style="grid-column:1/-1;">Credit Line (FR71-FR77)</span></div>
+          <div class="feature-row"><span>Credit Line approval queue</span><span class="font-mono text-muted-foreground">FR72</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Credit Limit adjust (increase/decrease)</span><span class="font-mono text-muted-foreground">FR73</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Credit Line lifecycle (Approve / Active / Suspend)</span><span class="font-mono text-muted-foreground">FR77</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Hard Block on over-credit</span><span class="font-mono text-muted-foreground">FR75</span><span class="badge badge-missing">No Backend</span></div>
+
+          <div class="feature-row bg-secondary/20"><span class="font-semibold text-muted-foreground" style="grid-column:1/-1;">Dispute & Recovery (FR78-FR80)</span></div>
+          <div class="feature-row"><span>Collection Notice (+ 7-day cooldown)</span><span class="font-mono text-muted-foreground">FR78</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Chargeback handling (Accept/Contest)</span><span class="font-mono text-muted-foreground">FR79</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Refund + Dual Approval (Super Admin + Finance)</span><span class="font-mono text-muted-foreground">FR80</span><span class="badge badge-missing">Missing</span></div>
+          <div class="feature-row"><span>Aging Report (overdue invoices)</span><span class="font-mono text-muted-foreground">FR95</span><span class="badge badge-missing">Missing</span></div>
+
+          <div class="feature-row bg-secondary/20"><span class="font-semibold text-muted-foreground" style="grid-column:1/-1;">Developer App (FR81-FR85)</span></div>
+          <div class="feature-row"><span>App Production approval queue</span><span class="font-mono text-muted-foreground">FR85</span><span class="badge badge-missing">Missing</span></div>
+
+          <div class="feature-row bg-secondary/20"><span class="font-semibold text-muted-foreground" style="grid-column:1/-1;">Compliance (FR88-FR95)</span></div>
+          <div class="feature-row"><span>Immutable Transaction Ledger (append-only)</span><span class="font-mono text-muted-foreground">FR92</span><span class="badge badge-missing">No Backend</span></div>
+          <div class="feature-row"><span>Audit trail (who, what, when, before/after)</span><span class="font-mono text-muted-foreground">FR93</span><span class="badge badge-missing">No Backend</span></div>
+          <div class="feature-row"><span>7-year data retention</span><span class="font-mono text-muted-foreground">FR94</span><span class="badge badge-missing">No Backend</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 5: CONNECTION MAP -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="connections" class="section-anchor space-y-6">
+      <h2 class="text-xl font-semibold flex items-center gap-2">
+        <span class="w-1.5 h-6 rounded-full bg-warn inline-block"></span>
+        Connection Map — Avatar &#10231; Central Platform
+      </h2>
+
+      <p class="text-sm text-muted-foreground">จุดเชื่อมต่อระหว่าง Avatar Sub-Platform กับ Central Platform ที่ต้อง implement ร่วมกัน</p>
+
+      <!-- Connection Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div class="card card-accent-connect glow-warn p-5 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="badge badge-connect">#1</span>
+            <h3 class="font-semibold text-sm">Token Deduction</h3>
+          </div>
+          <div class="text-xs space-y-1">
+            <div class="flex items-center gap-2"><span class="badge badge-avatar">Avatar</span><span>Session End &rarr; Token หักตาม duration (Per Minute)</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-central">Central</span><span>M-BE-07 Universal Token Wallet (FR52-54)</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-connect">Link</span><span>gRPC call + Trace ID (Session ID) for idempotency</span></div>
+          </div>
+          <div class="text-xs text-muted-foreground border-t border-border pt-2 mt-2">
+            <strong>Avatar-specific:</strong> 3-tier priority (Subscription &gt; Welcome Bonus &gt; Purchased) — Central Platform รองรับ 2-tier เท่านั้น ต้องขยาย API
+          </div>
+          <span class="badge badge-missing mt-2">Both Sides Missing</span>
+        </div>
+
+        <div class="card card-accent-connect glow-warn p-5 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="badge badge-connect">#2</span>
+            <h3 class="font-semibold text-sm">Subscription Plans</h3>
+          </div>
+          <div class="text-xs space-y-1">
+            <div class="flex items-center gap-2"><span class="badge badge-avatar">Avatar</span><span>Plan กำหนด: Bonus Tokens, Avatar Slots, Max Session, Features</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-central">Central</span><span>M-BE-06 Plan CRUD + M-BE-07 Billing Cycle (FR44-46,56-61)</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-connect">Link</span><span>Exchange Rate per Sub-Platform (1 token = 1 minute for Avatar)</span></div>
+          </div>
+          <div class="text-xs text-muted-foreground border-t border-border pt-2 mt-2">
+            <strong>Upgrade:</strong> Pro-rata (BR-CMT.24-25) | <strong>Downgrade:</strong> Extended days (BR-CMT.26-31) + Avatar Slot/Preset reallocation
+          </div>
+          <span class="badge badge-partial mt-2">Display Only — No CRUD</span>
+        </div>
+
+        <div class="card card-accent-connect glow-warn p-5 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="badge badge-connect">#3</span>
+            <h3 class="font-semibold text-sm">Tenant Registration & SSO</h3>
+          </div>
+          <div class="text-xs space-y-1">
+            <div class="flex items-center gap-2"><span class="badge badge-avatar">Avatar</span><span>Onboarding Flow (Section 2) — Subscribe Plan = prerequisite</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-central">Central</span><span>Tenant Service (FR1-3) — SSO, atomic User+Tenant+Membership</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-connect">Link</span><span>JWT with active_tenant claim (X-MT-01 FR15,27)</span></div>
+          </div>
+          <div class="text-xs text-muted-foreground border-t border-border pt-2 mt-2">
+            <strong>Account Linking:</strong> Tenant ที่มี SSO แล้ว link เข้า Avatar ด้วย consent (FR3, BR-CMT.2)
+          </div>
+          <span class="badge badge-missing mt-2">Both Sides Missing</span>
+        </div>
+
+        <div class="card card-accent-connect glow-warn p-5 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="badge badge-connect">#4</span>
+            <h3 class="font-semibold text-sm">Sub-Platform Registry</h3>
+          </div>
+          <div class="text-xs space-y-1">
+            <div class="flex items-center gap-2"><span class="badge badge-avatar">Avatar</span><span>ลงทะเบียนเป็น Sub-Platform + Branding + Landing Page</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-central">Central</span><span>M-BE-12 CRUD + Lifecycle + Health Dashboard (FR22-27)</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-connect">Link</span><span>Avatar = entry ใน Sub-Platform registry (code: avatar, domain: avatar.realfact.ai)</span></div>
+          </div>
+          <div class="text-xs text-muted-foreground border-t border-border pt-2 mt-2">
+            <strong>Lifecycle:</strong> Registered &rarr; Configured &rarr; Active — ต้อง check preconditions (Plans + Exchange Rate + Branding)
+          </div>
+          <span class="badge badge-partial mt-2">Display Only — No Write</span>
+        </div>
+
+        <div class="card card-accent-connect glow-warn p-5 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="badge badge-connect">#5</span>
+            <h3 class="font-semibold text-sm">Cost &rarr; Price Pipeline</h3>
+          </div>
+          <div class="text-xs space-y-1">
+            <div class="flex items-center gap-2"><span class="badge badge-avatar">Avatar</span><span>5 Service Codes (session, tts, rag, embedding, llm) — Per Minute/Token/Request</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-central">Central</span><span>M-BE-05 Cost &rarr; M-BE-06 Margin/Price (FR28-48)</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-connect">Link</span><span>Cost + Margin% = Sell Price (Triple Bidirectional)</span></div>
+          </div>
+          <div class="text-xs text-muted-foreground border-t border-border pt-2 mt-2">
+            <strong>Flow:</strong> Builder service codes &rarr; Cost Engine (ต้นทุน) &rarr; Price Engine (margin + snapshot) &rarr; Billing (invoice)
+          </div>
+          <span class="badge badge-partial mt-2">Display Only — Critical Pipeline Missing</span>
+        </div>
+
+        <div class="card card-accent-connect glow-warn p-5 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="badge badge-connect">#6</span>
+            <h3 class="font-semibold text-sm">Payment & Invoice</h3>
+          </div>
+          <div class="text-xs space-y-1">
+            <div class="flex items-center gap-2"><span class="badge badge-avatar">Avatar</span><span>Tenant subscribe Avatar &rarr; Payment &rarr; Welcome Bonus</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-central">Central</span><span>M-BE-07 (FR62-70): 2C2P + Bank Transfer + Company QR</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-connect">Link</span><span>Payment success &rarr; Activate Subscription &rarr; Grant Welcome Bonus (Avatar-specific A-FR38)</span></div>
+          </div>
+          <div class="text-xs text-muted-foreground border-t border-border pt-2 mt-2">
+            <strong>Purchase Log:</strong> Finance view (centralized cross-Tenant) + Tenant view (own purchases) — ต้องเป็น dedicated table (FR88-91)
+          </div>
+          <span class="badge badge-partial mt-2">Invoice Display OK — CRUD/Payment Missing</span>
+        </div>
+
+        <div class="card card-accent-connect glow-warn p-5 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="badge badge-connect">#7</span>
+            <h3 class="font-semibold text-sm">Notification System</h3>
+          </div>
+          <div class="text-xs space-y-1">
+            <div class="flex items-center gap-2"><span class="badge badge-avatar">Avatar</span><span>Preset ready, Device offline alert, Session limit</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-central">Central</span><span>M-BE-11 (FR86-87): Telegram + Email for billing events</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-connect">Link</span><span>Event Bus &rarr; M-BE-11 &rarr; Telegram/Email delivery</span></div>
+          </div>
+          <div class="text-xs text-muted-foreground border-t border-border pt-2 mt-2">
+            <strong>Critical (cannot disable):</strong> Subscription expired, Token depleted, Payment failed, Grace period warning (BR-CMT.20)
+          </div>
+          <span class="badge badge-missing mt-2">Both Sides Missing</span>
+        </div>
+
+        <div class="card card-accent-connect glow-warn p-5 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="badge badge-connect">#8</span>
+            <h3 class="font-semibold text-sm">Data Isolation (X-MT-01)</h3>
+          </div>
+          <div class="text-xs space-y-1">
+            <div class="flex items-center gap-2"><span class="badge badge-avatar">Avatar</span><span>KB, Session, Device, Preset — per-Tenant isolation</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-central">Central</span><span>X-MT-01 (FR15): Row-Level Security, JWT tenant validation</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-connect">Link</span><span>Every API call &rarr; validate active_tenant from JWT &rarr; filter data</span></div>
+          </div>
+          <div class="text-xs text-muted-foreground border-t border-border pt-2 mt-2">
+            <strong>Strategy:</strong> กำหนดตั้งแต่ Phase 0a (RLS / Schema-per-Tenant / DB-per-Tenant) — ปัจจุบัน UI ใช้ mock data ไม่มี isolation
+          </div>
+          <span class="badge badge-missing mt-2">No Backend</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 6: FULL FEATURE MATRIX -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="matrix" class="section-anchor space-y-6">
+      <h2 class="text-xl font-semibold flex items-center gap-2">
+        <span class="w-1.5 h-6 rounded-full bg-primary inline-block"></span>
+        Full Feature Matrix — Summary by Page
+      </h2>
+
+      <div class="card p-5 overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="border-b border-border">
+              <th class="text-left py-2 px-3 font-semibold text-muted-foreground">Page</th>
+              <th class="text-left py-2 px-3 font-semibold text-muted-foreground">System</th>
+              <th class="text-center py-2 px-3 font-semibold text-ok">OK</th>
+              <th class="text-center py-2 px-3 font-semibold text-info">Demo</th>
+              <th class="text-center py-2 px-3 font-semibold text-warn">Partial</th>
+              <th class="text-center py-2 px-3 font-semibold text-crit">Missing</th>
+              <th class="text-center py-2 px-3 font-semibold text-muted-foreground">Total</th>
+              <th class="text-center py-2 px-3 font-semibold text-muted-foreground">Coverage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-border/50 hover:bg-secondary/30">
+              <td class="py-2 px-3 font-medium">Dashboard</td>
+              <td class="py-2 px-3"><span class="badge badge-avatar">Avatar</span></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">5</td>
+              <td class="py-2 px-3 text-center text-info font-mono">0</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">0</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">0</td>
+              <td class="py-2 px-3 text-center font-mono">5</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-ok">100%</span></td>
+            </tr>
+            <tr class="border-b border-border/50 hover:bg-secondary/30">
+              <td class="py-2 px-3 font-medium">Hardware</td>
+              <td class="py-2 px-3"><span class="badge badge-avatar">Avatar</span></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">2</td>
+              <td class="py-2 px-3 text-center text-info font-mono">1</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">1</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">9</td>
+              <td class="py-2 px-3 text-center font-mono">13</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-missing">15%</span></td>
+            </tr>
+            <tr class="border-b border-border/50 hover:bg-secondary/30">
+              <td class="py-2 px-3 font-medium">Devices</td>
+              <td class="py-2 px-3"><span class="badge badge-avatar">Avatar</span></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">3</td>
+              <td class="py-2 px-3 text-center text-info font-mono">0</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">0</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">6</td>
+              <td class="py-2 px-3 text-center font-mono">9</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-partial">33%</span></td>
+            </tr>
+            <tr class="border-b border-border/50 hover:bg-secondary/30">
+              <td class="py-2 px-3 font-medium">Service Builder</td>
+              <td class="py-2 px-3"><span class="badge badge-avatar">Avatar</span></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">2</td>
+              <td class="py-2 px-3 text-center text-info font-mono">1</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">3</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">5</td>
+              <td class="py-2 px-3 text-center font-mono">11</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-partial">18%</span></td>
+            </tr>
+            <tr class="border-b border-border/50 hover:bg-secondary/30">
+              <td class="py-2 px-3 font-medium">Knowledge Base</td>
+              <td class="py-2 px-3"><span class="badge badge-avatar">Avatar</span></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">3</td>
+              <td class="py-2 px-3 text-center text-info font-mono">1</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">1</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">5</td>
+              <td class="py-2 px-3 text-center font-mono">10</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-partial">30%</span></td>
+            </tr>
+            <tr class="border-b border-border/50 hover:bg-secondary/30">
+              <td class="py-2 px-3 font-medium">Avatar Defaults</td>
+              <td class="py-2 px-3"><span class="badge badge-avatar">Avatar</span></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">0</td>
+              <td class="py-2 px-3 text-center text-info font-mono">0</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">1</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">5</td>
+              <td class="py-2 px-3 text-center font-mono">6</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-missing">8%</span></td>
+            </tr>
+            <tr class="border-b border-border/50 hover:bg-secondary/30">
+              <td class="py-2 px-3 font-medium">Tenants</td>
+              <td class="py-2 px-3"><span class="badge badge-central">Central</span></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">3</td>
+              <td class="py-2 px-3 text-center text-info font-mono">2</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">0</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">10</td>
+              <td class="py-2 px-3 text-center font-mono">15</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-missing">20%</span></td>
+            </tr>
+            <tr class="border-b border-border/50 hover:bg-secondary/30">
+              <td class="py-2 px-3 font-medium">Billing</td>
+              <td class="py-2 px-3"><span class="badge badge-central">Central</span></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">4</td>
+              <td class="py-2 px-3 text-center text-info font-mono">1</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">0</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">22</td>
+              <td class="py-2 px-3 text-center font-mono">27</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-missing">15%</span></td>
+            </tr>
+            <tr class="border-b border-border/50 hover:bg-secondary/30">
+              <td class="py-2 px-3 font-medium">Sub-Platforms</td>
+              <td class="py-2 px-3"><span class="badge badge-central">Central</span></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">2</td>
+              <td class="py-2 px-3 text-center text-info font-mono">1</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">3</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">5</td>
+              <td class="py-2 px-3 text-center font-mono">11</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-partial">18%</span></td>
+            </tr>
+            <tr class="border-b border-border/50 hover:bg-secondary/30">
+              <td class="py-2 px-3 font-medium">Cost Engine</td>
+              <td class="py-2 px-3"><span class="badge badge-central">Central</span></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">1</td>
+              <td class="py-2 px-3 text-center text-info font-mono">0</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">0</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">6</td>
+              <td class="py-2 px-3 text-center font-mono">7</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-missing">14%</span></td>
+            </tr>
+            <tr class="hover:bg-secondary/30">
+              <td class="py-2 px-3 font-medium">Price Engine</td>
+              <td class="py-2 px-3"><span class="badge badge-central">Central</span></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">2</td>
+              <td class="py-2 px-3 text-center text-info font-mono">0</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">0</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">11</td>
+              <td class="py-2 px-3 text-center font-mono">13</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-missing">15%</span></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="border-t-2 border-border font-semibold">
+              <td class="py-2 px-3">TOTAL</td>
+              <td class="py-2 px-3"></td>
+              <td class="py-2 px-3 text-center text-ok font-mono">27</td>
+              <td class="py-2 px-3 text-center text-info font-mono">7</td>
+              <td class="py-2 px-3 text-center text-warn font-mono">9</td>
+              <td class="py-2 px-3 text-center text-crit font-mono">84</td>
+              <td class="py-2 px-3 text-center font-mono">127</td>
+              <td class="py-2 px-3 text-center"><span class="badge badge-partial">~21%</span></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Key Findings -->
+      <div class="card p-5 space-y-4">
+        <h3 class="font-semibold text-sm">Key Findings</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+
+          <div class="border border-crit/30 rounded-lg p-4 space-y-2">
+            <div class="font-semibold text-crit">Critical Gaps (Revenue-Blocking)</div>
+            <ul class="space-y-1 text-muted-foreground list-disc list-inside">
+              <li><strong>Cost &rarr; Price Pipeline:</strong> Triple Bidirectional Editing, Approval workflows, Snapshots — ไม่มีเลย</li>
+              <li><strong>Credit Line:</strong> ทั้ง lifecycle ไม่มี — B2B ใช้งานไม่ได้</li>
+              <li><strong>Token Deduction:</strong> ไม่มี backend — คิดเงินไม่ได้</li>
+              <li><strong>Invoice/Receipt:</strong> Display only — auto-generate + PDF missing</li>
+              <li><strong>Payment Gateway (2C2P):</strong> ไม่มี integration</li>
+              <li><strong>Device Activation Flow:</strong> ทั้ง self-activate + admin-activate missing</li>
+            </ul>
+          </div>
+
+          <div class="border border-warn/30 rounded-lg p-4 space-y-2">
+            <div class="font-semibold text-warn">Important Gaps (Functionality)</div>
+            <ul class="space-y-1 text-muted-foreground list-disc list-inside">
+              <li><strong>All CRUD operations:</strong> ทุก Create/Edit/Delete เป็น demo alert หรือ no handler</li>
+              <li><strong>Record Sale flow:</strong> Hardware &rarr; Tenant mapping missing</li>
+              <li><strong>Preset Assignment:</strong> Assign to Tenant + slot limit missing</li>
+              <li><strong>Approval Workflows:</strong> Cost Change, Margin Change, Refund — ไม่มีเลย</li>
+              <li><strong>Subscription Management:</strong> Subscribe, Upgrade, Downgrade — ไม่มี</li>
+              <li><strong>RBAC:</strong> ไม่มี role-based menu hiding</li>
+              <li><strong>Purchase Log:</strong> Display OK แต่ไม่มี drill-down, filter, export</li>
+            </ul>
+          </div>
+
+          <div class="border border-ok/30 rounded-lg p-4 space-y-2">
+            <div class="font-semibold text-ok">Strengths (Well-Implemented)</div>
+            <ul class="space-y-1 text-muted-foreground list-disc list-inside">
+              <li><strong>Design System:</strong> CSS variables, dark/light mode, responsive grid, animations</li>
+              <li><strong>SPA Router:</strong> Hash-based with sidebar state, working navigation</li>
+              <li><strong>Dashboard:</strong> Real-time active sessions, stats, quick actions</li>
+              <li><strong>Data Display:</strong> Tables, cards, modals, search/filter ทำงานได้ดี</li>
+              <li><strong>Mock Data:</strong> ครอบคลุมทุก entity ที่ต้องการ — พร้อม migrate เป็น API</li>
+              <li><strong>Tab System:</strong> Client-side filtering ใน Hardware, Service Builder, Billing</li>
+            </ul>
+          </div>
+
+          <div class="border border-info/30 rounded-lg p-4 space-y-2">
+            <div class="font-semibold text-info">Recommendations</div>
+            <ul class="space-y-1 text-muted-foreground list-disc list-inside">
+              <li><strong>Phase 0a:</strong> SSO + JWT + Tenant Context lib &rarr; unlock RBAC + data isolation</li>
+              <li><strong>Next Priority:</strong> ทำ CRUD ให้ทุก modal ที่มี UI แล้ว (Hardware, Service Builder, KB)</li>
+              <li><strong>Cost &rarr; Price &rarr; Billing pipeline:</strong> เป็น critical path ที่ block revenue</li>
+              <li><strong>Device Activation + Record Sale:</strong> เป็น Avatar-specific critical path</li>
+              <li><strong>API Layer:</strong> Replace MockData with gRPC/REST calls ตาม proto contracts</li>
+              <li><strong>Missing pages:</strong> Welcome Bonus config, Credit Line mgmt, Aging Report</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PRD Phase Mapping -->
+      <div class="card p-5 space-y-4">
+        <h3 class="font-semibold text-sm">PRD Phase Mapping &rarr; UI Readiness</h3>
+        <div class="space-y-3 text-xs">
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-secondary/30">
+            <span class="font-mono font-semibold text-muted-foreground w-24">Sprint 0</span>
+            <span class="flex-1">Proto Contract Design (5 packages)</span>
+            <span class="badge badge-missing">No Proto</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-secondary/30">
+            <span class="font-mono font-semibold text-muted-foreground w-24">Phase 0a</span>
+            <span class="flex-1">Tenant Service Core + X-MT-01 (SSO, JWT, RBAC, Data Isolation)</span>
+            <span class="badge badge-missing">Missing</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-secondary/30">
+            <span class="font-mono font-semibold text-muted-foreground w-24">Phase 0b</span>
+            <span class="flex-1">Tenant Service Extended (Hub Page, Account Linking, Team Mgmt, PDPA)</span>
+            <span class="badge badge-missing">Missing</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-secondary/30">
+            <span class="font-mono font-semibold text-muted-foreground w-24">Phase 1</span>
+            <span class="flex-1">M-BE-04 (Tenants) + M-BE-12 (Sub-Platform) + M-BE-05 (Cost) + 2C2P Spike</span>
+            <span class="badge badge-partial">~30% Display</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-secondary/30">
+            <span class="font-mono font-semibold text-muted-foreground w-24">Phase 2</span>
+            <span class="flex-1">M-BE-06 (Price Engine — Margin, Snapshot, Plans, Price Lock)</span>
+            <span class="badge badge-partial">~15% Display</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-secondary/30">
+            <span class="font-mono font-semibold text-muted-foreground w-24">Phase 3</span>
+            <span class="flex-1">M-BE-07 (Billing — Wallet, Invoice, Payment, Credit Line, Refund)</span>
+            <span class="badge badge-partial">~25% Display</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center text-xs text-muted-foreground pt-8 pb-12 border-t border-border">
+      <p>Generated by <strong>BMad Master</strong> for <strong>Rf-mbp</strong> | RealFact Platform Gap Analysis</p>
+      <p class="mt-1">PRD Sources: prd-pricing-multitenancy.md (FR1-FR95) + prd-avatar-subplatform.md (A-FR1-A-FR40) + prd-multitenancy_v1.md (US-CMT/AMT, BR-CMT, EC-CMT)</p>
+    </footer>
+
+  </div>
+
+  <script>
+    function scrollNav(el) {
+      document.querySelectorAll('.sticky-nav .tab-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+    }
+    // Auto-highlight nav on scroll
+    const sections = ['overview','avatar','central','connections','matrix'];
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          document.querySelectorAll('.sticky-nav .tab-btn').forEach(b => {
+            b.classList.toggle('active', b.getAttribute('href') === '#' + id);
+          });
+        }
+      });
+    }, { threshold: 0.2, rootMargin: '-80px 0px 0px 0px' });
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+  </script>
+
+</body>
+</html>
